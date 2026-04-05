@@ -45,8 +45,8 @@ Post::factory()->count(3)->create(['is_featured' => 1]);
 
 The `BlogSeeder` creates:
 
-- **Admin user**: `admin@phpqa.ru` / `admin123`
-- **Regular user**: `user@phpqa.ru` / `user123`
+- **Admin user**: `admin@blog.local` / `admin123`
+- **Regular user**: `user@blog.local` / `user123`
 - **5 categories** with realistic names
 - **10 tags** for content organization
 - **20 regular posts** with random content

@@ -73,28 +73,6 @@ services:
     networks:
       - app-network
 
-  sveltewar-app:
-    build:
-      context: /var/www/sveltewar.phpqa.ru/html/
-      dockerfile: Dockerfile
-    volumes:
-      - /var/www/sveltewar.phpqa.ru/html/public:/usr/share/nginx/html/:rw
-    labels:
-      - "traefik.enable=true"
-      # HTTP to HTTPS redirect
-      - "traefik.http.routers.sveltewar-http.rule=Host(`sveltewar.phpqa.ru`) || Host(`sveltewar.web3main.pro`)"
-      - "traefik.http.routers.sveltewar-http.entrypoints=web"
-      #      - "traefik.http.routers.sveltewar-http.middlewares=sveltewar-https-redirect"
-      #      - "traefik.http.middlewares.sveltewar-https-redirect.redirectscheme.scheme=https"
-      # HTTPS configuration
-      - "traefik.http.routers.sveltewar-secure.rule=Host(`sveltewar.phpqa.ru`) || Host(`sveltewar.web3main.pro`)"
-      - "traefik.http.routers.sveltewar-secure.entrypoints=websecure"
-      - "traefik.http.routers.sveltewar-secure.tls=true"
-      - "traefik.http.routers.sveltewar-secure.tls.certresolver=myresolver"
-      - "traefik.http.services.sveltewar.loadbalancer.server.port=80"
-    networks:
-      - app-network
-
   symfony:
     image: ${DOCKER_REGISTRY_SERVER}/phpqa-api:latest
     #build:
@@ -149,6 +127,42 @@ services:
       - "traefik.http.routers.vmui-https.middlewares=vmui-redirect@docker,vmui-ratelimit@docker"
       - "traefik.http.services.vmui.loadbalancer.server.port=8427"
 
+  api-go:
+    env_file:
+      - path: ./api-go/.env.production
+        required: true
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.api-go-direct-http.rule=Host(`api.web3main.pro`)"
+      - "traefik.http.routers.api-go-direct-http.priority=10"
+      - "traefik.http.routers.api-go-direct-http.entrypoints=web"
+      - "traefik.http.routers.api-go-direct-http.service=api-go"
+      - "traefik.http.routers.api-go-direct.rule=Host(`api.web3main.pro`)"
+      - "traefik.http.routers.api-go-direct.priority=10"
+      - "traefik.http.routers.api-go-direct.entrypoints=websecure"
+      - "traefik.http.routers.api-go-direct.tls.certresolver=myresolver"
+      - "traefik.http.routers.api-go-direct.service=api-go"
+      - "traefik.http.services.api-go.loadbalancer.server.port=8081"
+
+  astro-frontend:
+    command: sh -c "corepack enable pnpm && pnpm install --frozen-lockfile && pnpm build && node dist/server/entry.mjs"
+    env_file:
+      - ./frontend-astro/.env.production
+    labels:
+      - "traefik.enable=true"
+      # HTTP
+      - "traefik.http.routers.astro-http.rule=Host(`web3main.pro`) || Host(`www.web3main.pro`)"
+      - "traefik.http.routers.astro-http.entrypoints=web"
+      - "traefik.http.routers.astro-http.priority=10"
+      - "traefik.http.routers.astro-http.service=astro"
+      # HTTPS
+      - "traefik.http.routers.astro.rule=Host(`web3main.pro`) || Host(`www.web3main.pro`)"
+      - "traefik.http.routers.astro.entrypoints=websecure"
+      - "traefik.http.routers.astro.tls.certresolver=myresolver"
+      - "traefik.http.routers.astro.priority=10"
+      - "traefik.http.routers.astro.service=astro"
+      - "traefik.http.services.astro.loadbalancer.server.port=4321"
+
   jaeger:
     labels:
       - "traefik.enable=true"
@@ -165,3 +179,6 @@ services:
       - "traefik.http.routers.jaeger-https.service=jaeger"
       - "traefik.http.routers.jaeger-https.middlewares=jaeger-auth@docker"
       - "traefik.http.services.jaeger.loadbalancer.server.port=16686"
+
+volumes:
+  astro_node_modules:

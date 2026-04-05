@@ -35,6 +35,7 @@ data/db/pg/db_data
 /data/victoria-logs/
 storage/
 .env
+.env.production
 
 # PHPStorm
 .idea

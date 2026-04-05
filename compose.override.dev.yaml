@@ -50,6 +50,29 @@ services:
       - "traefik.http.services.jaeger.loadbalancer.server.port=16686"
       - "traefik.http.routers.jaeger.entrypoints=web"
 
+  api-go:
+    env_file:
+      - path: ./api-go/.env
+        required: true
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.api-go-direct.rule=Host(`${API_GO_HOST}`)"
+      - "traefik.http.routers.api-go-direct.priority=10"
+      - "traefik.http.routers.api-go-direct.entrypoints=web"
+      - "traefik.http.routers.api-go-direct.service=api-go"
+      - "traefik.http.services.api-go.loadbalancer.server.port=8081"
+
+  astro-frontend:
+    command: sh -c "corepack enable pnpm && pnpm install && pnpm dev --host 0.0.0.0 --port 4321"
+    env_file:
+      - ./frontend-astro/.env
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.astro.rule=Host(`${ASTRO_HOST}`)"
+      - "traefik.http.routers.astro.priority=10"
+      - "traefik.http.routers.astro.entrypoints=web"
+      - "traefik.http.services.astro.loadbalancer.server.port=4321"
+
 #  mailer:
 #    image: mailhog/mailhog
 #    environment:
@@ -69,3 +92,4 @@ services:
 #      - "traefik.http.routers.mailhog.rule=Host(`mail.localhost`)"
 #      - "traefik.http.routers.mailhog.entrypoints=web"
 #      - "traefik.http.services.mailhog.loadbalancer.server.port=8025"
+

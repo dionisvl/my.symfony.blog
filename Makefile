@@ -17,6 +17,14 @@ down:
 build:
 	docker compose up --build -d
 
+astro-build-local:
+	docker compose -f compose.yml -f compose.override.dev.yaml stop astro-frontend
+	docker compose -f compose.yml -f compose.override.dev.yaml run --rm \
+		--env-from-file ./frontend-astro/.env \
+		-p 4321:4321 \
+		astro-frontend \
+		sh -c "corepack enable pnpm && pnpm install --frozen-lockfile && pnpm build && node dist/server/entry.mjs"
+
 docker-down-clear:
 	docker compose down -v --remove-orphans
 
@@ -36,7 +44,7 @@ sh:
 	docker compose exec symfony /bin/sh
 
 routes:
-	docker compose exec api bin/console debug:router
+	docker compose exec symfony bin/console debug:router
 
 # Testing
 test:

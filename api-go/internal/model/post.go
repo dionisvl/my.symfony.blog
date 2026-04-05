@@ -1,0 +1,50 @@
+package model
+
+import (
+	"time"
+
+	"github.com/uptrace/bun"
+)
+
+type Post struct {
+	bun.BaseModel `bun:"table:posts,alias:p"`
+
+	ID          int       `bun:"id,pk,autoincrement" json:"id"`
+	Title       string    `bun:"title,notnull"       json:"title"`
+	Slug        string    `bun:"slug,notnull"        json:"slug"`
+	Content     *string   `bun:"content"             json:"content,omitempty"`
+	Description *string   `bun:"description"         json:"description,omitempty"`
+	Image       *string   `bun:"image"               json:"-"`
+	Status      bool      `bun:"status,notnull"      json:"-"`
+	IsFeatured  bool      `bun:"is_featured,notnull" json:"is_featured"`
+	ViewsCount  int       `bun:"views_count,notnull" json:"views_count"`
+	UserID      int       `bun:"user_id,notnull"     json:"-"`
+	CategoryID  *int      `bun:"category_id"         json:"-"`
+	CreatedAt   time.Time `bun:"created_at,notnull"  json:"created_at"`
+	UpdatedAt   time.Time `bun:"updated_at,notnull"  json:"updated_at"`
+
+	Author   *User     `bun:"rel:belongs-to,join:user_id=id"     json:"author,omitempty"`
+	Category *Category `bun:"rel:belongs-to,join:category_id=id" json:"category,omitempty"`
+	Tags     []Tag     `bun:"m2m:post_tags,join:Post=Tag"        json:"tags,omitempty"`
+	Comments []Comment `bun:"-"                                  json:"comments,omitempty"`
+
+	ImageURL   string `bun:"-" json:"image_url"`
+	LikesCount int    `bun:"-" json:"likes_count"`
+}
+
+func (p *Post) ResolveImageURL() {
+	if p.Image == nil || *p.Image == "" {
+		p.ImageURL = "/storage/blog_images/no-image.png"
+	} else {
+		p.ImageURL = "/storage/uploads/" + *p.Image
+	}
+}
+
+type PostTag struct {
+	bun.BaseModel `bun:"table:post_tags"`
+
+	PostID int  `bun:"post_id"`
+	TagID  int  `bun:"tag_id"`
+	Post   Post `bun:"rel:belongs-to,join:post_id=id"`
+	Tag    Tag  `bun:"rel:belongs-to,join:tag_id=id"`
+}
