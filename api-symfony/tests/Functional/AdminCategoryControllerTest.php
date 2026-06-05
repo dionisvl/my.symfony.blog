@@ -38,9 +38,9 @@ final class AdminCategoryControllerTest extends DatabaseWebTestCase
         self::assertContains($category->getDetailText(), [$detail, '']);
         self::assertContains($category->getPreviewText(), [$preview, '']);
 
-        $newTitle = $title . ' Updated';
+        $newTitle = $title.' Updated';
 
-        $this->client->request(Request::METHOD_POST, '/admin/categories/' . $category->getId() . '/update', [
+        $this->client->request(Request::METHOD_POST, '/admin/categories/'.$category->getId().'/update', [
             'id' => $category->getId(),
             'title' => $newTitle,
             'detail_text' => $detail,
@@ -55,7 +55,7 @@ final class AdminCategoryControllerTest extends DatabaseWebTestCase
         self::assertNotNull($updated);
         self::assertSame($newTitle, $updated->getTitle());
 
-        $this->client->request(Request::METHOD_POST, '/admin/categories/' . $category->getId() . '/delete');
+        $this->client->request(Request::METHOD_POST, '/admin/categories/'.$category->getId().'/delete');
 
         $this->assertResponseRedirects('/admin/categories/');
 
@@ -103,7 +103,7 @@ final class AdminCategoryControllerTest extends DatabaseWebTestCase
         $this->em->flush();
 
         $this->client->loginUser($user);
-        $this->client->request(Request::METHOD_GET, '/admin/categories/' . $category->getId() . '/edit');
+        $this->client->request(Request::METHOD_GET, '/admin/categories/'.$category->getId().'/edit');
 
         $this->assertResponseIsSuccessful();
         $action = self::getContainer()->get('router')->generate(

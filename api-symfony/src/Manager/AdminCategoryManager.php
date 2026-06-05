@@ -40,7 +40,7 @@ final readonly class AdminCategoryManager
         $suffix = 2;
 
         while ($this->categoryRepository->findOneBy(['slug' => $slug])) {
-            $slug = $base . '-' . $suffix;
+            $slug = $base.'-'.$suffix;
             ++$suffix;
         }
 

@@ -65,7 +65,7 @@ final class FrontPartController extends AbstractController
 
     #[Route('/admin/frontparts/{id}/update', name: 'admin_frontparts_update', requirements: ['id' => '\d+'], methods: [
         'POST',
-        'PUT'
+        'PUT',
     ])]
     public function update(int $id, #[MapRequestPayload] AdminFrontPartPayload $payload): RedirectResponse
     {

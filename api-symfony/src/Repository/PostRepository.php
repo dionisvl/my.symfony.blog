@@ -156,7 +156,7 @@ final class PostRepository extends ServiceEntityRepository
 
     public function findRandomPublishedId(): ?int
     {
-        $count = (int)$this->createQueryBuilder('p')
+        $count = (int) $this->createQueryBuilder('p')
             ->select('COUNT(p.id)')
             ->where('p.status = :status')
             ->setParameter('status', false)
@@ -179,7 +179,7 @@ final class PostRepository extends ServiceEntityRepository
             ->getQuery()
             ->getSingleScalarResult();
 
-        return (int)$id;
+        return (int) $id;
     }
 
     public function findPublishedBySlug(string $slug): ?Post
@@ -268,7 +268,7 @@ final class PostRepository extends ServiceEntityRepository
             ->where('p.title LIKE :query')
             ->orWhere('p.description LIKE :query')
             ->orWhere('p.content LIKE :query')
-            ->setParameter('query', '%' . $escapedQuery . '%')
+            ->setParameter('query', '%'.$escapedQuery.'%')
             ->orderBy('p.createdAt', 'DESC')
             ->setMaxResults($limit);
 

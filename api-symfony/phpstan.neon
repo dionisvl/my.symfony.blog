@@ -11,6 +11,17 @@ parameters:
     checkBenevolentUnionTypes: true
     checkMissingCallableSignature: true
     checkTooWideReturnTypesInProtectedAndPublicMethods: true
+    ignoreErrors:
+        -
+            message: '#^Class App\\Entity\\.+ has an uninitialized property \$.+\.$#'
+        -
+            message: '#^Property App\\Entity\\.+ is never assigned int so it can be removed from the property type\.$#'
+        -
+            message: '#^Property App\\Entity\\.+ is never read, only written\.$#'
+        -
+            message: '#^Dynamic call to static method Symfony\\Bundle\\FrameworkBundle\\Test\\WebTestCase::.+\(\)\.$#'
+        -
+            message: '#^Class App\\Tests\\Functional\\DatabaseWebTestCase has an uninitialized property \$(client|em)\. Give it default value or assign it in the constructor\.$#'
     symfony:
         containerXmlPath: var/cache/test/App_KernelTestDebugContainer.xml
         consoleApplicationLoader: console-application.php

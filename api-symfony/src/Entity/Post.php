@@ -144,7 +144,7 @@ class Post
             return '/storage/blog_images/no-image.png';
         }
 
-        return '/storage/uploads/' . $this->image;
+        return '/storage/uploads/'.$this->image;
     }
 
     public function setImage(?string $image): self
@@ -262,7 +262,7 @@ class Post
 
     public function getComments(): Collection
     {
-        return $this->comments->filter(static fn($comment): bool => 1 === $comment->getStatus());
+        return $this->comments->filter(static fn ($comment): bool => 1 === $comment->getStatus());
     }
 
     public function getStatus(): bool
@@ -294,7 +294,7 @@ class Post
     public function removeImage(string $uploadDir): void
     {
         if (null !== $this->image) {
-            $filepath = $uploadDir . '/' . $this->image;
+            $filepath = $uploadDir.'/'.$this->image;
 
             if (file_exists($filepath)) {
                 unlink($filepath);

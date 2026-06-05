@@ -34,12 +34,12 @@ final readonly class FileValidator
     {
         $tmpPath = $file->getRealPath();
 
-        if (false === $tmpPath || !file_exists($tmpPath)) {
-            throw new \RuntimeException(\sprintf(
-                'Uploaded file not found. Real path: %s, Exists: %s',
-                $tmpPath ?? 'NULL',
-                file_exists($tmpPath ?? '') ? 'yes' : 'no'
-            ));
+        if (false === $tmpPath) {
+            throw new \RuntimeException('Uploaded file not found. Real path: unavailable, Exists: no');
+        }
+
+        if (!file_exists($tmpPath)) {
+            throw new \RuntimeException(\sprintf('Uploaded file not found. Real path: %s, Exists: no', $tmpPath));
         }
     }
 
@@ -68,9 +68,7 @@ final readonly class FileValidator
     private function validateSize(UploadedFile $file): void
     {
         if ($file->getSize() > self::MAX_FILE_SIZE) {
-            throw new \InvalidArgumentException(
-                \sprintf('File size %d exceeds maximum allowed size %d.', $file->getSize(), self::MAX_FILE_SIZE)
-            );
+            throw new \InvalidArgumentException(\sprintf('File size %d exceeds maximum allowed size %d.', $file->getSize(), self::MAX_FILE_SIZE));
         }
     }
 
@@ -91,9 +89,7 @@ final readonly class FileValidator
         $allowedExtensions = self::ALLOWED_MIME_TYPES[$mimeType];
 
         if (!\in_array($extension, $allowedExtensions, true)) {
-            throw new \InvalidArgumentException(
-                \sprintf('File extension ".%s" does not match MIME type "%s".', $extension, $mimeType)
-            );
+            throw new \InvalidArgumentException(\sprintf('File extension ".%s" does not match MIME type "%s".', $extension, $mimeType));
         }
 
         $this->validateImageContent($file);

@@ -48,7 +48,7 @@ final class CommentController extends AbstractController
 
     #[Route('/admin/comments/{id}/delete', name: 'admin_comments_delete', requirements: ['id' => '\d+'], methods: [
         'POST',
-        'DELETE'
+        'DELETE',
     ])]
     public function delete(int $id): RedirectResponse
     {

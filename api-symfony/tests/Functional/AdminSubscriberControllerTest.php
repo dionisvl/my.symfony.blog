@@ -33,7 +33,7 @@ final class AdminSubscriberControllerTest extends DatabaseWebTestCase
         $subscriber = $this->em->getRepository(Subscription::class)->findOneBy(['email' => $email]);
         self::assertNotNull($subscriber);
 
-        $this->client->request(Request::METHOD_POST, '/admin/subscribers/' . $subscriber->getId() . '/delete');
+        $this->client->request(Request::METHOD_POST, '/admin/subscribers/'.$subscriber->getId().'/delete');
         $this->assertResponseRedirects('/admin/subscribers/');
 
         $this->em->clear();

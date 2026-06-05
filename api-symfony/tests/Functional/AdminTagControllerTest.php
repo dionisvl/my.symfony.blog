@@ -34,9 +34,9 @@ final class AdminTagControllerTest extends DatabaseWebTestCase
 
         self::assertNotNull($tag);
 
-        $newTitle = $title . ' Updated';
+        $newTitle = $title.' Updated';
 
-        $this->client->request(Request::METHOD_POST, '/admin/tags/' . $tag->getId() . '/update', [
+        $this->client->request(Request::METHOD_POST, '/admin/tags/'.$tag->getId().'/update', [
             'id' => $tag->getId(),
             'title' => $newTitle,
         ]);
@@ -49,7 +49,7 @@ final class AdminTagControllerTest extends DatabaseWebTestCase
         self::assertNotNull($updated);
         self::assertSame($newTitle, $updated->getTitle());
 
-        $this->client->request(Request::METHOD_POST, '/admin/tags/' . $tag->getId() . '/delete');
+        $this->client->request(Request::METHOD_POST, '/admin/tags/'.$tag->getId().'/delete');
 
         $this->assertResponseRedirects('/admin/tags/');
 
@@ -97,7 +97,7 @@ final class AdminTagControllerTest extends DatabaseWebTestCase
         $this->em->flush();
 
         $this->client->loginUser($user);
-        $this->client->request(Request::METHOD_GET, '/admin/tags/' . $tag->getId() . '/edit');
+        $this->client->request(Request::METHOD_GET, '/admin/tags/'.$tag->getId().'/edit');
 
         $this->assertResponseIsSuccessful();
         $action = self::getContainer()->get('router')->generate('admin_tags_update', ['id' => $tag->getId()]);

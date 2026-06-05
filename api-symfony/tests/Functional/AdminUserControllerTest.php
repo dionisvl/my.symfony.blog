@@ -25,7 +25,7 @@ final class AdminUserControllerTest extends DatabaseWebTestCase
 
         $this->client->loginUser($admin);
 
-        $this->client->request(Request::METHOD_POST, '/admin/users/' . $user->getId() . '/update', [
+        $this->client->request(Request::METHOD_POST, '/admin/users/'.$user->getId().'/update', [
             'id' => $user->getId(),
             'name' => $name,
             'email' => $email,
@@ -86,7 +86,7 @@ final class AdminUserControllerTest extends DatabaseWebTestCase
         $user = $this->createUser('Edit User', 'edit@example.com', 'hash');
 
         $this->client->loginUser($admin);
-        $this->client->request(Request::METHOD_GET, '/admin/users/' . $user->getId() . '/edit');
+        $this->client->request(Request::METHOD_GET, '/admin/users/'.$user->getId().'/edit');
 
         $this->assertResponseIsSuccessful();
         $action = self::getContainer()->get('router')->generate('admin_users_update', ['id' => $user->getId()]);
@@ -100,7 +100,7 @@ final class AdminUserControllerTest extends DatabaseWebTestCase
         $userId = $user->getId();
 
         $this->client->loginUser($admin);
-        $this->client->request(Request::METHOD_POST, '/admin/users/' . $userId . '/delete');
+        $this->client->request(Request::METHOD_POST, '/admin/users/'.$userId.'/delete');
 
         $this->assertResponseRedirects('/admin/users/');
 
@@ -115,7 +115,7 @@ final class AdminUserControllerTest extends DatabaseWebTestCase
         $user = $this->createUser('Invalid User', 'invalid@example.com', 'hash');
 
         $this->client->loginUser($admin);
-        $this->client->request(Request::METHOD_POST, '/admin/users/' . $user->getId() . '/update', [
+        $this->client->request(Request::METHOD_POST, '/admin/users/'.$user->getId().'/update', [
             'id' => $user->getId(),
             'name' => '',
             'email' => 'not-an-email',
@@ -133,7 +133,7 @@ final class AdminUserControllerTest extends DatabaseWebTestCase
         $this->createUser('Second', 'second@example.com', 'hash');
 
         $this->client->loginUser($admin);
-        $this->client->request(Request::METHOD_POST, '/admin/users/' . $user->getId() . '/update', [
+        $this->client->request(Request::METHOD_POST, '/admin/users/'.$user->getId().'/update', [
             'id' => $user->getId(),
             'name' => 'First',
             'email' => 'second@example.com',

@@ -23,13 +23,13 @@ final class CommentController extends AbstractController
 
     public function __invoke(Request $request): RedirectResponse
     {
-        $message = $request->request->get('message');
-        $postId = (int)$request->request->get('post_id');
-        $countMe = (int)$request->request->get('countMe');
-        $honeypot = $request->request->get('honeypot');
+        $message = trim((string) $request->request->get('message', ''));
+        $postId = (int) $request->request->get('post_id');
+        $countMe = (int) $request->request->get('countMe');
+        $honeypot = trim((string) $request->request->get('honeypot', ''));
         $referer = $request->headers->get('referer', '/');
 
-        if (empty($message)) {
+        if ('' === $message) {
             $this->addFlash('error', 'Comment text is required');
 
             return $this->redirect($referer);
@@ -41,7 +41,7 @@ final class CommentController extends AbstractController
             return $this->redirect($referer);
         }
 
-        if (!empty($honeypot)) {
+        if ('' !== $honeypot) {
             $this->addFlash('error', 'Error: HPF');
 
             return $this->redirect($referer);
@@ -58,7 +58,7 @@ final class CommentController extends AbstractController
         $user = $this->getUser();
         $commentUser = $user instanceof User ? $user : null;
 
-        $this->commentManager->createComment($post, $commentUser, (string)$message);
+        $this->commentManager->createComment($post, $commentUser, $message);
 
         $this->addFlash('success', 'Your comment will be added soon!');
 

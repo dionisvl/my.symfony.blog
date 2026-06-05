@@ -38,7 +38,7 @@ final readonly class AdminTagManager
         $suffix = 2;
 
         while ($this->tagRepository->findOneBy(['slug' => $slug])) {
-            $slug = $base . '-' . $suffix;
+            $slug = $base.'-'.$suffix;
             ++$suffix;
         }
 

@@ -43,8 +43,7 @@ final class ProductController extends AbstractController
         #[MapRequestPayload] AdminProductPayload $payload,
         #[MapUploadedFile(name: 'preview_picture')] ?UploadedFile $previewPicture = null,
         #[MapUploadedFile(name: 'detail_picture')] ?UploadedFile $detailPicture = null,
-    ): RedirectResponse
-    {
+    ): RedirectResponse {
         $payload->previewPicture = $previewPicture;
         $payload->detailPicture = $detailPicture;
 
@@ -83,15 +82,14 @@ final class ProductController extends AbstractController
 
     #[Route('/admin/products/{id}/update', name: 'admin_products_update', requirements: ['id' => '\d+'], methods: [
         'POST',
-        'PUT'
+        'PUT',
     ])]
     public function update(
         int $id,
         #[MapRequestPayload] AdminProductPayload $payload,
         #[MapUploadedFile(name: 'preview_picture')] ?UploadedFile $previewPicture = null,
         #[MapUploadedFile(name: 'detail_picture')] ?UploadedFile $detailPicture = null,
-    ): RedirectResponse
-    {
+    ): RedirectResponse {
         $product = $this->productRepository->find($id);
 
         if (!$product instanceof Product) {
@@ -109,7 +107,7 @@ final class ProductController extends AbstractController
 
     #[Route('/admin/products/{id}/delete', name: 'admin_products_delete', requirements: ['id' => '\d+'], methods: [
         'POST',
-        'DELETE'
+        'DELETE',
     ])]
     public function delete(int $id): RedirectResponse
     {

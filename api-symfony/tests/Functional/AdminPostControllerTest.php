@@ -35,7 +35,7 @@ final class AdminPostControllerTest extends DatabaseWebTestCase
         $post = $this->createPost($user, $category, 'Edit Me', 'edit-me', false);
 
         $path = str_contains($pathTemplate, '%d')
-            ? \sprintf($pathTemplate, (int)$post->getId())
+            ? \sprintf($pathTemplate, (int) $post->getId())
             : $pathTemplate;
 
         $this->client->loginUser($user);
@@ -43,7 +43,7 @@ final class AdminPostControllerTest extends DatabaseWebTestCase
 
         $this->assertResponseIsSuccessful();
         $this->assertSelectorExists('form');
-        $routeParams = 'admin_posts_update' === $routeName && $post->getId()
+        $routeParams = 'admin_posts_update' === $routeName && null !== $post->getId()
             ? ['id' => $post->getId()]
             : [];
         $action = self::getContainer()->get('router')->generate($routeName, $routeParams);
@@ -94,14 +94,14 @@ final class AdminPostControllerTest extends DatabaseWebTestCase
 
         $this->client->loginUser($user);
 
-        $title = 'New Post ' . $date;
+        $title = 'New Post '.$date;
 
         $this->client->request(Request::METHOD_POST, '/admin/posts/store', [
             'title' => $title,
             'content' => 'Body text',
             'description' => 'Short description',
             'date' => $date,
-            'category_id' => (string)$category->getId(),
+            'category_id' => (string) $category->getId(),
             'status' => $status,
             'is_featured' => $isFeatured,
             'tags' => [$tag->getId()],
@@ -142,14 +142,14 @@ final class AdminPostControllerTest extends DatabaseWebTestCase
 
         $this->client->loginUser($user);
 
-        $newTitle = 'Updated ' . $date;
+        $newTitle = 'Updated '.$date;
 
-        $this->client->request(Request::METHOD_POST, '/admin/posts/' . $post->getId() . '/update', [
+        $this->client->request(Request::METHOD_POST, '/admin/posts/'.$post->getId().'/update', [
             'title' => $newTitle,
             'content' => 'Updated content',
             'description' => 'Updated description',
             'date' => $date,
-            'category_id' => (string)$category->getId(),
+            'category_id' => (string) $category->getId(),
             'status' => $status,
             'is_featured' => $isFeatured,
             'tags' => [$tag->getId()],
@@ -174,7 +174,7 @@ final class AdminPostControllerTest extends DatabaseWebTestCase
         $category = $this->createCategory('PHP', 'php');
         $post = $this->createPost($user, $category, 'Public Post', 'public-post', false);
 
-        $this->client->request(Request::METHOD_GET, '/post/' . $post->getSlug());
+        $this->client->request(Request::METHOD_GET, '/post/'.$post->getSlug());
 
         $this->assertResponseIsSuccessful();
         self::assertStringContainsString('Public Post', $this->client->getResponse()->getContent());
@@ -190,7 +190,7 @@ final class AdminPostControllerTest extends DatabaseWebTestCase
         self::assertNotNull($postId);
         $this->client->loginUser($user);
 
-        $this->client->request(Request::METHOD_POST, '/admin/posts/' . $postId . '/delete');
+        $this->client->request(Request::METHOD_POST, '/admin/posts/'.$postId.'/delete');
 
         $this->assertResponseRedirects('/admin/posts/');
 
@@ -211,7 +211,7 @@ final class AdminPostControllerTest extends DatabaseWebTestCase
             'content' => 'Initial content',
             'description' => 'Initial description',
             'date' => '2024-02-01',
-            'category_id' => (string)$category->getId(),
+            'category_id' => (string) $category->getId(),
             'status' => '0',
             'is_featured' => '0',
         ]);
@@ -225,12 +225,12 @@ final class AdminPostControllerTest extends DatabaseWebTestCase
         $postId = $post->getId();
         self::assertNotNull($postId);
 
-        $this->client->request(Request::METHOD_POST, '/admin/posts/' . $postId . '/update', [
+        $this->client->request(Request::METHOD_POST, '/admin/posts/'.$postId.'/update', [
             'title' => 'Updated Title',
             'content' => 'Updated content',
             'description' => 'Updated description',
             'date' => '2024-02-02',
-            'category_id' => (string)$category->getId(),
+            'category_id' => (string) $category->getId(),
             'status' => '0',
             'is_featured' => '0',
         ]);
@@ -245,7 +245,7 @@ final class AdminPostControllerTest extends DatabaseWebTestCase
         $this->assertResponseIsSuccessful();
         self::assertStringContainsString('Updated Title', $this->client->getResponse()->getContent());
 
-        $this->client->request(Request::METHOD_GET, '/post/' . $updated->getSlug());
+        $this->client->request(Request::METHOD_GET, '/post/'.$updated->getSlug());
         $this->assertResponseIsSuccessful();
         self::assertStringContainsString('Updated Title', $this->client->getResponse()->getContent());
     }

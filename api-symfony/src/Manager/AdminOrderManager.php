@@ -52,7 +52,7 @@ final readonly class AdminOrderManager
         $suffix = 2;
 
         while ($this->slugExists($slug, $current)) {
-            $slug = $base . '-' . $suffix;
+            $slug = $base.'-'.$suffix;
             ++$suffix;
         }
 

@@ -41,7 +41,7 @@ final class AdminCommentControllerTest extends DatabaseWebTestCase
         $this->em->flush();
 
         $this->client->loginUser($user);
-        $this->client->request(Request::METHOD_GET, '/admin/comments/' . $comment->getId() . '/toggle');
+        $this->client->request(Request::METHOD_GET, '/admin/comments/'.$comment->getId().'/toggle');
 
         $this->assertResponseRedirects('/admin/comments/');
 
@@ -50,7 +50,7 @@ final class AdminCommentControllerTest extends DatabaseWebTestCase
         self::assertNotNull($updated);
         self::assertSame(1 === $status ? 0 : 1, $updated->getStatus());
 
-        $this->client->request(Request::METHOD_POST, '/admin/comments/' . $comment->getId() . '/delete');
+        $this->client->request(Request::METHOD_POST, '/admin/comments/'.$comment->getId().'/delete');
         $this->assertResponseRedirects('/admin/comments/');
 
         $this->em->clear();

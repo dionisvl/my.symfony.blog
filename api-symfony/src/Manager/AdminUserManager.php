@@ -52,7 +52,7 @@ final readonly class AdminUserManager
         $user->setIsAdmin($this->normalizeBool($payload->isAdmin));
         $user->setStatus($this->normalizeBool($payload->status) ? 1 : 0);
 
-        $hash = $this->passwordHasher->hashPassword($user, (string)$payload->password);
+        $hash = $this->passwordHasher->hashPassword($user, (string) $payload->password);
         $user->setPassword($hash);
         $user->setUpdatedAt(new \DateTime());
 

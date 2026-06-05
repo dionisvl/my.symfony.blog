@@ -33,7 +33,7 @@ final class PostLikeController extends AbstractController
             ]);
         }
 
-        $cookieName = 'likedPostToday' . $postId;
+        $cookieName = 'likedPostToday'.$postId;
         $isLiked = $request->cookies->has($cookieName);
 
         if ($isLiked) {
@@ -41,7 +41,7 @@ final class PostLikeController extends AbstractController
 
             if (null !== $likedAt) {
                 try {
-                    $likeDateTime = \DateTime::createFromFormat('Y-m-d H:i:s', (string)$likedAt);
+                    $likeDateTime = \DateTime::createFromFormat('Y-m-d H:i:s', (string) $likedAt);
 
                     if ($likeDateTime instanceof \DateTime) {
                         $this->postLikeManager->removeLikeForPostAt($postId, $likeDateTime);
@@ -76,7 +76,7 @@ final class PostLikeController extends AbstractController
             $data = json_decode($request->getContent(), true, flags: \JSON_THROW_ON_ERROR);
 
             if (isset($data['device_memory'])) {
-                $deviceMemory = (int)$data['device_memory'];
+                $deviceMemory = (int) $data['device_memory'];
             }
         } catch (\JsonException) {
             // If JSON is invalid, continue without device_memory data

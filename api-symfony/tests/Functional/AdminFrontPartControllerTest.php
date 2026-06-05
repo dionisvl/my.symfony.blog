@@ -45,8 +45,8 @@ final class AdminFrontPartControllerTest extends DatabaseWebTestCase
         self::assertNotNull($frontPart);
         self::assertSame('1' === $status ? '1' : '0', $frontPart->getStatus());
 
-        $newTitle = $title . ' Updated';
-        $this->client->request(Request::METHOD_POST, '/admin/frontparts/' . $frontPart->getId() . '/update', [
+        $newTitle = $title.' Updated';
+        $this->client->request(Request::METHOD_POST, '/admin/frontparts/'.$frontPart->getId().'/update', [
             'title' => $newTitle,
             'category_name' => $categoryName,
             'type' => $type,
@@ -62,7 +62,7 @@ final class AdminFrontPartControllerTest extends DatabaseWebTestCase
         self::assertNotNull($updated);
         self::assertSame($newTitle, $updated->getTitle());
 
-        $this->client->request(Request::METHOD_POST, '/admin/frontparts/' . $frontPart->getId() . '/delete');
+        $this->client->request(Request::METHOD_POST, '/admin/frontparts/'.$frontPart->getId().'/delete');
         $this->assertResponseRedirects('/admin/frontparts/');
 
         $this->em->clear();
@@ -109,7 +109,7 @@ final class AdminFrontPartControllerTest extends DatabaseWebTestCase
         $this->em->flush();
 
         $this->client->loginUser($user);
-        $this->client->request(Request::METHOD_GET, '/admin/frontparts/' . $frontPart->getId() . '/edit');
+        $this->client->request(Request::METHOD_GET, '/admin/frontparts/'.$frontPart->getId().'/edit');
 
         $this->assertResponseIsSuccessful();
         $action = self::getContainer()->get('router')->generate(

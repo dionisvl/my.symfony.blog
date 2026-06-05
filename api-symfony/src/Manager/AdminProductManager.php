@@ -9,6 +9,8 @@ use App\Entity\Product;
 use App\Entity\User;
 use App\Repository\CategoryRepository;
 use App\Repository\ProductRepository;
+use App\Service\FileNameGenerator;
+use App\Service\FileValidator;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
@@ -23,6 +25,8 @@ final readonly class AdminProductManager
         private CategoryRepository $categoryRepository,
         private SluggerInterface $slugger,
         private TokenStorageInterface $tokenStorage,
+        private FileValidator $fileValidator,
+        private FileNameGenerator $fileNameGenerator,
         #[Autowire('%kernel.project_dir%')] private string $projectDir,
     ) {
     }
@@ -83,7 +87,7 @@ final readonly class AdminProductManager
             }
         }
 
-        $uploadDir = $this->projectDir . '/public/storage/shop_uploads';
+        $uploadDir = $this->projectDir.'/public/storage/shop_uploads';
 
         if (!is_dir($uploadDir)) {
             mkdir($uploadDir, 0755, true);
@@ -91,12 +95,12 @@ final readonly class AdminProductManager
 
         if ($payload->previewPicture instanceof UploadedFile) {
             $product->removeImage('preview_picture', $uploadDir);
-            $product->uploadImage($payload->previewPicture, 'preview_picture', $uploadDir);
+            $product->uploadImage($payload->previewPicture, 'preview_picture', $uploadDir, $this->fileValidator, $this->fileNameGenerator);
         }
 
         if ($payload->detailPicture instanceof UploadedFile) {
             $product->removeImage('detail_picture', $uploadDir);
-            $product->uploadImage($payload->detailPicture, 'detail_picture', $uploadDir);
+            $product->uploadImage($payload->detailPicture, 'detail_picture', $uploadDir, $this->fileValidator, $this->fileNameGenerator);
         }
 
         $this->entityManager->persist($product);
@@ -112,7 +116,7 @@ final readonly class AdminProductManager
         $suffix = 2;
 
         while ($this->slugExists($slug, $current)) {
-            $slug = $base . '-' . $suffix;
+            $slug = $base.'-'.$suffix;
             ++$suffix;
         }
 
@@ -141,7 +145,7 @@ final readonly class AdminProductManager
 
     public function delete(Product $product): void
     {
-        $uploadDir = $this->projectDir . '/public/storage/shop_uploads';
+        $uploadDir = $this->projectDir.'/public/storage/shop_uploads';
         $product->removeImage('preview_picture', $uploadDir);
         $product->removeImage('detail_picture', $uploadDir);
 
