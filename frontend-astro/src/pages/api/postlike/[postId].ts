@@ -1,5 +1,5 @@
-import type { APIRoute } from "astro";
-import { API_URL, API_KEY } from "astro:env/server";
+import type {APIRoute} from "astro";
+import {API_KEY, API_URL} from "astro:env/server";
 
 export const prerender = false;
 
@@ -32,10 +32,10 @@ export const POST: APIRoute = async ({ params, request }) => {
   const text = await upstream.text();
   const headers = new Headers({ "Content-Type": "application/json" });
 
-  // Forward Set-Cookie back to the browser (toggle likedPostToday{id})
-  const setCookie = upstream.headers.get("set-cookie");
-  if (setCookie) {
-    headers.append("set-cookie", setCookie);
+  // Forward Set-Cookie back to the browser (toggle likedPostToday{id}).
+  // Use getSetCookie() so multiple cookies aren't collapsed/dropped by undici.
+  for (const cookie of upstream.headers.getSetCookie()) {
+    headers.append("Set-Cookie", cookie);
   }
 
   return new Response(text, { status: upstream.status, headers });

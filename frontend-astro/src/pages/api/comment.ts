@@ -1,5 +1,5 @@
-import type { APIRoute } from "astro";
-import { postComment, ApiClientError } from "../../lib/api";
+import type {APIRoute} from "astro";
+import {ApiClientError, postComment} from "../../lib/api";
 
 export const prerender = false;
 
@@ -13,7 +13,15 @@ export const POST: APIRoute = async ({ request }) => {
   const contentType = request.headers.get("content-type") ?? "";
 
   if (contentType.includes("application/json")) {
-    const b = await request.json();
+    let b: Record<string, unknown>;
+    try {
+      b = await request.json();
+    } catch {
+      return new Response(
+        JSON.stringify({ status: "error", message: "Invalid JSON body" }),
+        { status: 400, headers: { "Content-Type": "application/json" } },
+      );
+    }
     message = String(b.message ?? "");
     post_id = Number(b.post_id ?? 0);
     countMe = Number(b.countMe ?? 0);
