@@ -9,6 +9,8 @@ import (
 	"api-go/internal/repository"
 )
 
+const maxCommentBodyBytes = 16 << 10 // 16 KB
+
 type CommentHandler struct {
 	comments repository.CommentRepository
 	logger   *slog.Logger
@@ -26,6 +28,8 @@ type commentRequest struct {
 }
 
 func (h *CommentHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	r.Body = http.MaxBytesReader(w, r.Body, maxCommentBodyBytes)
+
 	var req commentRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		RespondError(w, http.StatusBadRequest, "invalid request body")
@@ -36,6 +40,11 @@ func (h *CommentHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	if req.Message == "" {
 		RespondError(w, http.StatusUnprocessableEntity, "comment text is required")
+		return
+	}
+
+	if len(req.Message) > 5000 {
+		RespondError(w, http.StatusUnprocessableEntity, "comment text is too long")
 		return
 	}
 

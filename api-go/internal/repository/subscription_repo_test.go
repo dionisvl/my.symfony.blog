@@ -44,7 +44,7 @@ func TestSubscriptionRepository_EmailExists(t *testing.T) {
 	assert.False(t, exists)
 }
 
-func TestSubscriptionRepository_Create_DuplicateEmail(t *testing.T) {
+func TestSubscriptionRepository_Create_Idempotent(t *testing.T) {
 	tdb := testhelper.NewTestDB(t)
 	tdb.Truncate(t, "subscriptions")
 
@@ -54,6 +54,19 @@ func TestSubscriptionRepository_Create_DuplicateEmail(t *testing.T) {
 	_, err := repo.Create(ctx, "dup@example.com", "token-1")
 	require.NoError(t, err)
 
+	exists, err := repo.EmailExists(ctx, "dup@example.com")
+	require.NoError(t, err)
+	assert.True(t, exists)
+
 	_, err = repo.Create(ctx, "dup@example.com", "token-2")
-	assert.Error(t, err, "duplicate email should fail at DB level")
+	require.NoError(t, err, "second create with same email must not error")
+
+	exists, err = repo.EmailExists(ctx, "dup@example.com")
+	require.NoError(t, err)
+	assert.True(t, exists)
+
+	var count int
+	err = tdb.SQLDB().QueryRowContext(ctx, "SELECT COUNT(*) FROM subscriptions WHERE email = $1", "dup@example.com").Scan(&count)
+	require.NoError(t, err)
+	assert.Equal(t, 1, count, "duplicate email must not create a second row")
 }

@@ -9,6 +9,8 @@ import (
 	"api-go/internal/repository"
 )
 
+const maxIncomingBodyBytes = 16 << 10 // 16 KB
+
 type IncomingHandler struct {
 	incomings repository.IncomingRepository
 	logger    *slog.Logger
@@ -28,6 +30,8 @@ type incomingRequest struct {
 }
 
 func (h *IncomingHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	r.Body = http.MaxBytesReader(w, r.Body, maxIncomingBodyBytes)
+
 	var req incomingRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		RespondError(w, http.StatusBadRequest, "invalid request body")
@@ -37,11 +41,11 @@ func (h *IncomingHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	req.Name = strings.TrimSpace(req.Name)
 	req.Message = strings.TrimSpace(req.Message)
 
-	if req.Name == "" {
+	if req.Name == "" || len(req.Name) > 255 {
 		RespondError(w, http.StatusUnprocessableEntity, "name is required")
 		return
 	}
-	if req.Message == "" {
+	if req.Message == "" || len(req.Message) > 5000 {
 		RespondError(w, http.StatusUnprocessableEntity, "message is required")
 		return
 	}

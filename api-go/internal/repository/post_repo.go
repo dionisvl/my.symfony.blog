@@ -44,6 +44,9 @@ func (r *postRepository) FindPublishedPaginated(ctx context.Context, page, perPa
 		return nil, 0, err
 	}
 	resolveImages(posts)
+	if err := r.attachLikeCounts(ctx, posts); err != nil {
+		return nil, 0, err
+	}
 	return posts, count, nil
 }
 
@@ -91,6 +94,9 @@ func (r *postRepository) FindFeatured(ctx context.Context, limit int) ([]model.P
 		return nil, err
 	}
 	resolveImages(posts)
+	if err := r.attachLikeCounts(ctx, posts); err != nil {
+		return nil, err
+	}
 	return posts, nil
 }
 
@@ -108,6 +114,9 @@ func (r *postRepository) FindRecentPublished(ctx context.Context, limit int) ([]
 		return nil, err
 	}
 	resolveImages(posts)
+	if err := r.attachLikeCounts(ctx, posts); err != nil {
+		return nil, err
+	}
 	return posts, nil
 }
 
@@ -129,6 +138,9 @@ func (r *postRepository) FindPublishedByCategorySlugPaginated(ctx context.Contex
 		return nil, 0, err
 	}
 	resolveImages(posts)
+	if err := r.attachLikeCounts(ctx, posts); err != nil {
+		return nil, 0, err
+	}
 	return posts, count, nil
 }
 
@@ -151,6 +163,9 @@ func (r *postRepository) FindPublishedByTagSlugPaginated(ctx context.Context, sl
 		return nil, 0, err
 	}
 	resolveImages(posts)
+	if err := r.attachLikeCounts(ctx, posts); err != nil {
+		return nil, 0, err
+	}
 	return posts, count, nil
 }
 
@@ -177,6 +192,9 @@ func (r *postRepository) SearchPublished(ctx context.Context, query string, limi
 		return nil, err
 	}
 	resolveImages(posts)
+	if err := r.attachLikeCounts(ctx, posts); err != nil {
+		return nil, err
+	}
 	return posts, nil
 }
 
@@ -209,6 +227,44 @@ func (r *postRepository) countLikes(ctx context.Context, postID int) (int, error
 		Where("post_id = ?", postID).
 		Count(ctx)
 	return count, err
+}
+
+func (r *postRepository) attachLikeCounts(ctx context.Context, posts []model.Post) error {
+	if len(posts) == 0 {
+		return nil
+	}
+
+	postIDs := make([]int, len(posts))
+	for i, post := range posts {
+		postIDs[i] = post.ID
+	}
+
+	var results []struct {
+		PostID int `bun:"post_id"`
+		Count  int `bun:"count"`
+	}
+
+	err := r.db.NewSelect().
+		TableExpr("posts_likes").
+		Column("post_id").
+		ColumnExpr("COUNT(*) as count").
+		Where("post_id IN (?)", bun.List(postIDs)).
+		Group("post_id").
+		Scan(ctx, &results)
+	if err != nil {
+		return err
+	}
+
+	countMap := make(map[int]int)
+	for _, result := range results {
+		countMap[result.PostID] = result.Count
+	}
+
+	for i := range posts {
+		posts[i].LikesCount = countMap[posts[i].ID]
+	}
+
+	return nil
 }
 
 func escapeLike(s string) string {

@@ -1,6 +1,7 @@
 package config
 
 import (
+	"errors"
 	"strings"
 	"time"
 
@@ -84,6 +85,17 @@ func Load() (*Config, error) {
 	if err := v.Unmarshal(&cfg); err != nil {
 		return nil, err
 	}
+	if err := validate(&cfg); err != nil {
+		return nil, err
+	}
 
 	return &cfg, nil
+}
+
+func validate(cfg *Config) error {
+	if strings.TrimSpace(cfg.Auth.APIKey) == "" {
+		return errors.New("API_KEY must not be empty")
+	}
+
+	return nil
 }

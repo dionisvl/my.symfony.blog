@@ -12,6 +12,9 @@ import (
 	"api-go/internal/repository"
 )
 
+const maxSubscribeBodyBytes = 1 << 10 // 1 KB
+const maxEmailLength = 254              // RFC 5321
+
 var emailRe = regexp.MustCompile(`^[^@\s]+@[^@\s]+\.[^@\s]+$`)
 
 type SubscribeHandler struct {
@@ -28,6 +31,8 @@ type subscribeRequest struct {
 }
 
 func (h *SubscribeHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	r.Body = http.MaxBytesReader(w, r.Body, maxSubscribeBodyBytes)
+
 	var req subscribeRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		RespondError(w, http.StatusBadRequest, "invalid request body")
@@ -35,7 +40,7 @@ func (h *SubscribeHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	req.Email = strings.ToLower(strings.TrimSpace(req.Email))
-	if req.Email == "" || !emailRe.MatchString(req.Email) {
+	if req.Email == "" || !emailRe.MatchString(req.Email) || len(req.Email) > maxEmailLength {
 		RespondError(w, http.StatusUnprocessableEntity, "valid email is required")
 		return
 	}

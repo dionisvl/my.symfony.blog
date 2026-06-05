@@ -130,6 +130,68 @@ func TestPostRepository_FindPublishedByCategorySlugPaginated(t *testing.T) {
 	assert.Equal(t, "Go post", posts[0].Title)
 }
 
+func TestPostRepository_FindPublishedPaginated_WithLikeCounts(t *testing.T) {
+	tdb := testhelper.NewTestDB(t)
+	tdb.Truncate(t, "post_tags", "posts_likes", "comments", "posts", "users", "categories")
+
+	ctx := context.Background()
+	userID := insertUser(t, tdb, "author7@test.com")
+	post1ID := insertPost(t, tdb, "Post 1", "post-1", false, userID)
+	post2ID := insertPost(t, tdb, "Post 2", "post-2", false, userID)
+	post3ID := insertPost(t, tdb, "Post 3", "post-3", false, userID)
+
+	insertLike(t, tdb, post1ID, "192.168.1.1")
+	insertLike(t, tdb, post2ID, "192.168.1.2")
+	insertLike(t, tdb, post2ID, "192.168.1.3")
+	insertLike(t, tdb, post2ID, "192.168.1.4")
+
+	repo := repository.NewPostRepository(tdb.DB)
+
+	posts, total, err := repo.FindPublishedPaginated(ctx, 1, 10)
+	require.NoError(t, err)
+	assert.Equal(t, 3, total)
+	assert.Len(t, posts, 3)
+
+	assert.Equal(t, post3ID, posts[0].ID)
+	assert.Equal(t, 0, posts[0].LikesCount)
+
+	assert.Equal(t, post2ID, posts[1].ID)
+	assert.Equal(t, 3, posts[1].LikesCount)
+
+	assert.Equal(t, post1ID, posts[2].ID)
+	assert.Equal(t, 1, posts[2].LikesCount)
+}
+
+func TestPostRepository_FindFeatured_WithLikeCounts(t *testing.T) {
+	tdb := testhelper.NewTestDB(t)
+	tdb.Truncate(t, "post_tags", "posts_likes", "comments", "posts", "users", "categories")
+
+	ctx := context.Background()
+	userID := insertUser(t, tdb, "author8@test.com")
+	featured1ID := insertFeaturedPost(t, tdb, "Featured 1", "featured-1", userID)
+	featured2ID := insertFeaturedPost(t, tdb, "Featured 2", "featured-2", userID)
+	regularID := insertPost(t, tdb, "Regular", "regular", false, userID)
+
+	insertLike(t, tdb, featured1ID, "10.0.0.1")
+	insertLike(t, tdb, featured1ID, "10.0.0.2")
+	insertLike(t, tdb, featured2ID, "10.0.0.3")
+	insertLike(t, tdb, regularID, "10.0.0.4")
+
+	repo := repository.NewPostRepository(tdb.DB)
+
+	posts, err := repo.FindFeatured(ctx, 10)
+	require.NoError(t, err)
+	assert.Len(t, posts, 2)
+
+	for _, p := range posts {
+		if p.ID == featured1ID {
+			assert.Equal(t, 2, p.LikesCount)
+		} else if p.ID == featured2ID {
+			assert.Equal(t, 1, p.LikesCount)
+		}
+	}
+}
+
 // --- helpers ---
 
 func insertUser(t *testing.T, tdb *testhelper.TestDB, email string) int {
@@ -182,6 +244,17 @@ func insertPostWithCategory(t *testing.T, tdb *testhelper.TestDB, title, slug st
 	err := tdb.SQLDB().QueryRowContext(context.Background(),
 		`INSERT INTO posts (title, slug, status, is_featured, views_count, user_id, category_id, created_at, updated_at) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING id`,
 		title, slug, draft, false, 0, userID, catID, time.Now(), time.Now(),
+	).Scan(&id)
+	require.NoError(t, err)
+	return id
+}
+
+func insertLike(t *testing.T, tdb *testhelper.TestDB, postID int, ip string) int {
+	t.Helper()
+	var id int
+	err := tdb.SQLDB().QueryRowContext(context.Background(),
+		`INSERT INTO posts_likes (post_id, ip, created_at, updated_at) VALUES ($1,$2,$3,$4) RETURNING id`,
+		postID, ip, time.Now(), time.Now(),
 	).Scan(&id)
 	require.NoError(t, err)
 	return id

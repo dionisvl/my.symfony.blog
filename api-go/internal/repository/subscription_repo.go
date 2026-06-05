@@ -30,7 +30,10 @@ func (r *subscriptionRepository) Create(ctx context.Context, email, token string
 		CreatedAt: now,
 		UpdatedAt: now,
 	}
-	_, err := r.db.NewInsert().Model(sub).Exec(ctx)
+	_, err := r.db.NewInsert().
+		Model(sub).
+		On("CONFLICT (email) DO NOTHING").
+		Exec(ctx)
 	if err != nil {
 		return nil, err
 	}

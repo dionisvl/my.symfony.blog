@@ -43,10 +43,10 @@ func (h *PostLikeHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	cookie, err := r.Cookie(cookieName)
 	if err == nil {
-		// already liked — unlike
-		likedAt, parseErr := time.Parse("2006-01-02 15:04:05", cookie.Value)
-		if parseErr == nil {
-			if delErr := h.likes.DeleteByPostAndTime(r.Context(), postID, likedAt); delErr != nil {
+		// already liked — unlike by the stable like ID stored in the cookie
+		likeID, parseErr := strconv.Atoi(cookie.Value)
+		if parseErr == nil && likeID > 0 {
+			if delErr := h.likes.DeleteByIDAndPost(r.Context(), likeID, postID); delErr != nil {
 				h.logger.Error("delete like failed", slog.String("error", delErr.Error()))
 			}
 		}
@@ -90,7 +90,7 @@ func (h *PostLikeHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	http.SetCookie(w, &http.Cookie{
 		Name:     cookieName,
-		Value:    like.CreatedAt.Format("2006-01-02 15:04:05"),
+		Value:    strconv.Itoa(like.ID),
 		Expires:  time.Now().Add(24 * time.Hour),
 		Path:     "/",
 		HttpOnly: true,
