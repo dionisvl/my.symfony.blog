@@ -9,6 +9,9 @@ services:
       - "--entrypoints.web.address=:80"
       - "--entrypoints.websecure.address=:443"
       - "--entrypoints.websecure.http3"
+      - "--entrypoints.web.http.redirections.entrypoint.to=websecure"
+      - "--entrypoints.web.http.redirections.entrypoint.scheme=https"
+      - "--entrypoints.web.http.redirections.entrypoint.permanent=true"
       - "--tracing.otlp=true"
       - "--tracing.otlp.http=true"
       - "--tracing.otlp.http.endpoint=http://jaeger:4318/v1/traces"
@@ -76,16 +79,26 @@ services:
       - "traefik.http.routers.symfony-old-https.tls.certresolver=myresolver"
       - "traefik.http.routers.symfony-old-https.service=symfony"
 
-      # NEW DOMAIN - HTTP → HTTPS redirect
-      - "traefik.http.routers.symfony-http.rule=Host(`web3main.pro`) || Host(`www.web3main.pro`)"
+      # NEW DOMAIN - Symfony serves ONLY admin/login/logout; public front is Astro.
+      # HTTP (admin area)
+      - "traefik.http.routers.symfony-http.rule=(Host(`web3main.pro`) || Host(`www.web3main.pro`)) && (PathPrefix(`/admin`) || Path(`/login`) || Path(`/logout`))"
       - "traefik.http.routers.symfony-http.entrypoints=web"
+      - "traefik.http.routers.symfony-http.priority=50"
       - "traefik.http.routers.symfony-http.service=symfony"
 
-      # NEW DOMAIN - HTTPS (main)
-      - "traefik.http.routers.symfony.rule=Host(`web3main.pro`) || Host(`www.web3main.pro`)"
+      # HTTPS (admin area, main)
+      - "traefik.http.routers.symfony.rule=(Host(`web3main.pro`) || Host(`www.web3main.pro`)) && (PathPrefix(`/admin`) || Path(`/login`) || Path(`/logout`))"
       - "traefik.http.routers.symfony.entrypoints=websecure"
+      - "traefik.http.routers.symfony.priority=50"
       - "traefik.http.routers.symfony.tls.certresolver=myresolver"
       - "traefik.http.routers.symfony.service=symfony"
+
+      # Admin-only static assets served by Symfony (Astro owns /css/front.css etc.).
+      - "traefik.http.routers.symfony-admin-assets.rule=(Host(`web3main.pro`) || Host(`www.web3main.pro`)) && (Path(`/css/admin.css`) || Path(`/css/some_admin_fix.css`) || Path(`/css/bootstrap5-adminlte-compat.css`) || Path(`/js/admin.js`) || Path(`/js/some_fix_admin.js`))"
+      - "traefik.http.routers.symfony-admin-assets.entrypoints=websecure"
+      - "traefik.http.routers.symfony-admin-assets.priority=70"
+      - "traefik.http.routers.symfony-admin-assets.tls.certresolver=myresolver"
+      - "traefik.http.routers.symfony-admin-assets.service=symfony"
 
       - "traefik.http.services.symfony.loadbalancer.server.port=80"
 
@@ -125,10 +138,35 @@ services:
       - "traefik.http.routers.api-go-direct.entrypoints=websecure"
       - "traefik.http.routers.api-go-direct.tls.certresolver=myresolver"
       - "traefik.http.routers.api-go-direct.service=api-go"
+      # Serve /storage/* (uploaded images, blog assets) from api-go on the public host.
+      - "traefik.http.routers.api-go-storage-http.rule=(Host(`web3main.pro`) || Host(`www.web3main.pro`)) && PathPrefix(`/storage`)"
+      - "traefik.http.routers.api-go-storage-http.priority=60"
+      - "traefik.http.routers.api-go-storage-http.entrypoints=web"
+      - "traefik.http.routers.api-go-storage-http.service=api-go"
+      - "traefik.http.routers.api-go-storage.rule=(Host(`web3main.pro`) || Host(`www.web3main.pro`)) && PathPrefix(`/storage`)"
+      - "traefik.http.routers.api-go-storage.priority=60"
+      - "traefik.http.routers.api-go-storage.entrypoints=websecure"
+      - "traefik.http.routers.api-go-storage.tls.certresolver=myresolver"
+      - "traefik.http.routers.api-go-storage.service=api-go"
+      # Serve SEO files from api-go on the public host.
+      - "traefik.http.routers.api-go-seo.rule=(Host(`web3main.pro`) || Host(`www.web3main.pro`)) && (Path(`/sitemap.xml`) || Path(`/robots.txt`) || Path(`/llms.txt`))"
+      - "traefik.http.routers.api-go-seo.priority=80"
+      - "traefik.http.routers.api-go-seo.entrypoints=websecure"
+      - "traefik.http.routers.api-go-seo.tls.certresolver=myresolver"
+      - "traefik.http.routers.api-go-seo.service=api-go"
       - "traefik.http.services.api-go.loadbalancer.server.port=8081"
 
   astro-frontend:
-    command: sh -c "corepack enable pnpm && pnpm install --frozen-lockfile && pnpm build && node dist/server/entry.mjs"
+    build:
+      context: ./frontend-astro
+      dockerfile: ./Dockerfile
+      target: prod
+      args:
+        PUBLIC_SITE_URL: https://web3main.pro
+        PUBLIC_SITE_TITLE: web3main.pro
+        PUBLIC_SITE_AUTHOR: Web3main LLC
+        PUBLIC_SITE_DESC: Stay updated with the latest trends in Web3 development, software engineering tips, and best coding practices for modern applications.
+        PUBLIC_GOOGLE_SITE_VERIFICATION: ${PUBLIC_GOOGLE_SITE_VERIFICATION:-}
     env_file:
       - ./frontend-astro/.env.production
     labels:

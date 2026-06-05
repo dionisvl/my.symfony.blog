@@ -1,86 +1,95 @@
 include .env
 
+COMPOSE_DEV=docker compose -f compose.yml -f compose.override.dev.yaml
+
 init: docker-down-clear \
 	composer-install \
 	migrates
 
 up:
-	docker compose -f compose.yml -f compose.override.dev.yaml up -d
+	$(COMPOSE_DEV) up -d
 up-prod:
 	docker compose -f compose.yml -f compose.override.prod.yaml up -d
 restart-symfony-dev:
-	docker compose -f compose.yml -f compose.override.dev.yaml up -d --force-recreate symfony
+	$(COMPOSE_DEV) up -d --force-recreate symfony
 rebuild:
-	docker compose down -t 0 && docker compose up --build
+	$(COMPOSE_DEV) down -t 0 && $(COMPOSE_DEV) up --build
 down:
-	docker compose down -t 0 --remove-orphans
+	$(COMPOSE_DEV) down -t 0 --remove-orphans
 build:
-	docker compose up --build -d
+	$(COMPOSE_DEV) up --build -d
 
 astro-build-local:
-	docker compose -f compose.yml -f compose.override.dev.yaml stop astro-frontend
-	docker compose -f compose.yml -f compose.override.dev.yaml run --rm \
+	$(COMPOSE_DEV) stop astro-frontend
+	$(COMPOSE_DEV) run --rm \
 		--env-from-file ./frontend-astro/.env \
 		-p 4321:4321 \
 		astro-frontend \
 		sh -c "corepack enable pnpm && pnpm install --frozen-lockfile && pnpm build && node dist/server/entry.mjs"
 
 docker-down-clear:
-	docker compose down -v --remove-orphans
+	$(COMPOSE_DEV) down -v --remove-orphans
 
 composer-install:
-	docker compose exec symfony composer install
+	$(COMPOSE_DEV) exec symfony composer install
 
 db-drop:
-	docker compose exec symfony bin/console doctrine:schema:drop --force --full-database
+	$(COMPOSE_DEV) exec symfony bin/console doctrine:schema:drop --force --full-database
 
 migrates:
-	docker compose exec symfony bin/console doctrine:migrations:migrate --no-interaction
+	$(COMPOSE_DEV) exec symfony bin/console doctrine:migrations:migrate --no-interaction
 
 
 bash:
-	docker compose exec symfony /bin/bash
+	$(COMPOSE_DEV) exec symfony /bin/bash
 sh:
-	docker compose exec symfony /bin/sh
+	$(COMPOSE_DEV) exec symfony /bin/sh
 
 routes:
-	docker compose exec symfony bin/console debug:router
+	$(COMPOSE_DEV) exec symfony bin/console debug:router
 
 # Testing
 test:
-	docker compose exec -e APP_ENV=test -e APP_DEBUG=1 symfony ./vendor/bin/phpunit
+	$(COMPOSE_DEV) exec -e APP_ENV=test -e APP_DEBUG=1 -e DATABASE_URL='sqlite:///%kernel.project_dir%/var/data_test.db' symfony ./vendor/bin/phpunit -c phpunit.dist.xml
 
 test-filter:
-	docker compose exec -e APP_ENV=test -e APP_DEBUG=1 symfony ./vendor/bin/phpunit --filter $(FILTER)
+	$(COMPOSE_DEV) exec -e APP_ENV=test -e APP_DEBUG=1 -e DATABASE_URL='sqlite:///%kernel.project_dir%/var/data_test.db' symfony ./vendor/bin/phpunit -c phpunit.dist.xml --filter $(FILTER)
 
 test-coverage:
-	docker compose exec -e APP_ENV=test -e APP_DEBUG=1 symfony ./vendor/bin/phpunit --coverage-html coverage
+	$(COMPOSE_DEV) exec -e APP_ENV=test -e APP_DEBUG=1 -e DATABASE_URL='sqlite:///%kernel.project_dir%/var/data_test.db' symfony ./vendor/bin/phpunit -c phpunit.dist.xml --coverage-html coverage
+
+# Go API tests (run natively on host; testcontainers starts its own postgres)
+test-go:
+	cd api-go && GOTOOLCHAIN=auto go test ./...
 
 # Code quality commands
 rector:
-	docker compose exec symfony ./vendor/bin/rector process --dry-run --config tools/rector.php
+	$(COMPOSE_DEV) exec symfony ./vendor/bin/rector process --dry-run --config rector.php
 
 rector-fix:
-	docker compose exec symfony vendor/bin/rector --ansi
+	$(COMPOSE_DEV) exec symfony vendor/bin/rector process --config rector.php --ansi
 
 phpstan:
 	@if [ "$$(git rev-parse --abbrev-ref HEAD)" = "master" ]; then \
-		git diff --name-only --diff-filter=ACM HEAD~1 | grep "^api-symfony.*\.php$$" | sed 's|^api-symfony/||' | xargs -r docker compose exec -T symfony vendor/bin/phpstan analyse --memory-limit=2048M; \
-	else \
-		git diff --name-only --diff-filter=ACM origin/master | grep "^api-symfony.*\.php$$" | sed 's|^api-symfony/||' | xargs -r docker compose exec -T symfony vendor/bin/phpstan analyse --memory-limit=2048M; \
-	fi
+			git diff --name-only --diff-filter=ACM HEAD~1 | grep "^api-symfony.*\.php$$" | sed 's|^api-symfony/||' | xargs -r $(COMPOSE_DEV) exec -T symfony vendor/bin/phpstan analyse --memory-limit=2048M; \
+		else \
+			git diff --name-only --diff-filter=ACM origin/master | grep "^api-symfony.*\.php$$" | sed 's|^api-symfony/||' | xargs -r $(COMPOSE_DEV) exec -T symfony vendor/bin/phpstan analyse --memory-limit=2048M; \
+		fi
+
+phpstan-symfony-full:
+	$(COMPOSE_DEV) exec symfony vendor/bin/phpstan analyse --memory-limit=2048M
 
 cs-fix:
-	docker compose exec symfony ./vendor/bin/php-cs-fixer fix
+	$(COMPOSE_DEV) exec symfony ./vendor/bin/php-cs-fixer fix
 
 cache-clear:
-	docker compose exec symfony php bin/console cache:clear
-	docker compose exec symfony sh -c "rm -rf var/cache/dev/* && php -r 'opcache_reset();'"
-	docker compose exec symfony php bin/console cache:warmup
-	docker compose restart symfony
+	$(COMPOSE_DEV) exec symfony php bin/console cache:clear
+	$(COMPOSE_DEV) exec symfony sh -c "rm -rf var/cache/dev/* && php -r 'opcache_reset();'"
+	$(COMPOSE_DEV) exec symfony php bin/console cache:warmup
+	$(COMPOSE_DEV) restart symfony
 
 aphorizm:
-	docker compose exec symfony php bin/console app:seed-aphorisms
+	$(COMPOSE_DEV) exec symfony php bin/console app:seed-aphorisms
 
 # Monitoring Stack
 monitoring-up:
