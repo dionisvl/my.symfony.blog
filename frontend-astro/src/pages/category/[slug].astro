@@ -7,6 +7,7 @@ import LazyImage from "../../components/LazyImage.astro";
 import { getCategory, getHome, ApiClientError } from "../../lib/api";
 import type { CategoryResponse, HomeResponse } from "../../lib/types";
 import { formatDate } from "../../lib/format";
+import { canonicalFor } from "../../lib/url";
 
 const { slug } = Astro.params;
 const pageParam = Astro.url.searchParams.get("page");
@@ -30,7 +31,7 @@ const title = `${category.title}${page > 1 ? `, page ${page}` : ""} - Web3 Blog`
 const description = category.preview_text || `Browse articles in ${category.title}. Explore our curated collection of posts on this topic.`;
 ---
 
-<Layout title={title} description={description}>
+<Layout title={title} description={description} canonical={canonicalFor(Astro.url.pathname)}>
   <div class="w-full md:w-3/4 pr-0 md:pr-6 space-y-3">
     <div class="p-4 rounded-lg mb-6">
       <h1 class="text-2xl font-semibold text-white mb-3">{category.title}</h1>

@@ -1,6 +1,7 @@
 ---
 import { PUBLIC_SITE_URL } from "astro:env/client";
 import type { Post } from "../lib/types";
+import { absoluteUrl, canonicalFor } from "../lib/url";
 import "../styles/global.css";
 
 interface Props {
@@ -27,15 +28,15 @@ const siteName = "Web3 Blog";
 const orgName = "Web3main LLC";
 const orgEmail = `info@${siteHost}`;
 const orgPhone = "+123 456 78900";
-const orgLogo = `${siteUrl}/storage/blog_images/logo.png`;
+const orgLogo = absoluteUrl("/storage/blog_images/logo.png");
 const defaultDescription =
   "Stay updated with the latest trends in Web3 development, software engineering tips, and best coding practices for modern applications.";
 const metaDescription = description ? description.trim() : defaultDescription;
 const metaImage = image
   ? image.trim()
-  : `${siteUrl}/storage/blog_images/logo.png`;
+  : absoluteUrl("/storage/blog_images/logo.png");
 const metaTitle = title || "Web3 Blog";
-const canonicalUrl = canonical || Astro.url.href;
+const canonicalUrl = canonical || canonicalFor(Astro.url.pathname);
 
 const organizationSchema = {
   "@context": "https://schema.org",

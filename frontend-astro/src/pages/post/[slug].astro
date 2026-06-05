@@ -1,19 +1,19 @@
 ---
 export const prerender = false;
 
-import { PUBLIC_SITE_URL } from "astro:env/client";
 import Layout from "../../layouts/Layout.astro";
 import Sidebar from "../../components/Sidebar.astro";
 import LazyImage from "../../components/LazyImage.astro";
 import { getPost, ApiClientError } from "../../lib/api";
 import type { PostResponse } from "../../lib/types";
 import { formatDate, fromNow, excerpt } from "../../lib/format";
+import { absoluteUrl } from "../../lib/url";
 
 const { slug } = Astro.params;
 
 let data: PostResponse;
 try {
-  data = await getPost(slug!);
+  data = await getPost(slug!, Astro);
 } catch (error) {
   if (error instanceof ApiClientError && error.status === 404) {
     Astro.response.status = 404;
@@ -28,9 +28,9 @@ const defaultDescription =
 const shortDescription =
   excerpt(post.description || post.content, 157) || defaultDescription;
 const title = `${post.title} - Web3 Blog`;
-const absoluteImage = `${PUBLIC_SITE_URL}${post.image_url}`;
+const absoluteImage = absoluteUrl(post.image_url);
 
-const shareUrl = encodeURIComponent(`${PUBLIC_SITE_URL}/post/${post.slug}`);
+const shareUrl = encodeURIComponent(absoluteUrl(`/post/${post.slug}`));
 const shareTitle = encodeURIComponent(post.title);
 ---
 
@@ -39,7 +39,7 @@ const shareTitle = encodeURIComponent(post.title);
   description={shortDescription}
   image={absoluteImage}
   ogType="article"
-  canonical={`${PUBLIC_SITE_URL}/post/${post.slug}`}
+  canonical={absoluteUrl(`/post/${post.slug}`)}
 >
   <div class="w-full md:w-3/4 pr-0 md:pr-6">
     <article

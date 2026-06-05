@@ -6,6 +6,7 @@ import Sidebar from "../components/Sidebar.astro";
 import LazyImage from "../components/LazyImage.astro";
 import { getHome } from "../lib/api";
 import { formatDate } from "../lib/format";
+import { canonicalFor } from "../lib/url";
 
 const pageParam = Astro.url.searchParams.get("page");
 const page = Math.max(1, parseInt(pageParam || "1", 10));
@@ -17,7 +18,7 @@ const description = `Stay updated with the latest trends in Web3 development, so
 }`;
 ---
 
-<Layout title={title} description={description}>
+<Layout title={title} description={description} canonical={canonicalFor(Astro.url.pathname)}>
   <div class="w-full md:w-3/4 pr-0 md:pr-6 space-y-3">
     {
       data.posts.map((post) => (

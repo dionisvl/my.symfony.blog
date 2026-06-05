@@ -18,19 +18,37 @@ export class ApiClientError extends Error {
   }
 }
 
+// Minimal view of Astro's APIContext: enough to forward/return cookies during SSR.
+type CookieContext = {
+  request: Request;
+  response: { headers: Headers };
+};
+
 async function apiFetch<T>(
   path: string,
   init: RequestInit = {},
+  ctx?: CookieContext,
 ): Promise<T> {
   const url = `${API_URL}${path}`;
-  const res = await fetch(url, {
-    ...init,
-    headers: {
-      "Content-Type": "application/json",
-      "X-API-Key": API_KEY,
-      ...(init.headers as Record<string, string>),
-    },
-  });
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    "X-API-Key": API_KEY,
+    ...(init.headers as Record<string, string>),
+  };
+
+  // Forward the browser cookies so Go's per-day view/like gates work behind SSR.
+  const cookie = ctx?.request.headers.get("cookie");
+  if (cookie) {
+    headers["Cookie"] = cookie;
+  }
+
+  const res = await fetch(url, { ...init, headers });
+
+  // Propagate Set-Cookie from Go back to the browser.
+  const setCookie = res.headers.getSetCookie?.() ?? [];
+  for (const value of setCookie) {
+    ctx?.response.headers.append("Set-Cookie", value);
+  }
 
   if (!res.ok) {
     const body = await res.text();
@@ -46,8 +64,15 @@ export function getHome(page = 1): Promise<HomeResponse> {
   return apiFetch<HomeResponse>(`/api/?page=${page}`);
 }
 
-export function getPost(slug: string): Promise<PostResponse> {
-  return apiFetch<PostResponse>(`/api/post/${encodeURIComponent(slug)}`);
+export function getPost(
+  slug: string,
+  ctx?: CookieContext,
+): Promise<PostResponse> {
+  return apiFetch<PostResponse>(
+    `/api/post/${encodeURIComponent(slug)}`,
+    {},
+    ctx,
+  );
 }
 
 export function getTag(slug: string, page = 1): Promise<TagResponse> {
