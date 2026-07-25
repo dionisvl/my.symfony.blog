@@ -127,7 +127,7 @@ const currentYear = new Date().getFullYear();
     <script type="application/ld+json" set:html={JSON.stringify(websiteSchema)}>
     </script>
 
-    <!-- Common CSS from Laravel -->
+    <!-- Shared front-end styles -->
     <link rel="stylesheet" href="/css/front.css" />
 
     <!-- Lazy Load CSS -->
@@ -142,7 +142,7 @@ const currentYear = new Date().getFullYear();
     />
 
     <!-- Favicon -->
-    <link rel="icon" type="image/png" href="/storage/blog_images/favicon.png" />
+    <link rel="icon" type="image/png" href="/favicon.png" />
 
     <slot name="head_extra" />
   </head>
@@ -366,7 +366,7 @@ const currentYear = new Date().getFullYear();
       </div>
     </footer>
 
-    <!-- JavaScript from Laravel -->
+    <!-- Front-end behaviour: likes, lazy loading -->
     <script src="/js/front.js" defer></script>
     <script src="/js/lazy-load.js" defer></script>
     <script
