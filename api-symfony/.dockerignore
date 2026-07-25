@@ -1,0 +1,21 @@
+# Build artifacts and local state must never be baked into the image.
+# A stale var/cache/prod shipped in the image makes Twig serve outdated
+# templates even after the source changes.
+var/
+vendor/
+tests/
+.env.local
+.env.*.local
+.git
+.gitignore
+.idea/
+coverage/
+node_modules/
+*.md
+tools/
+phpstan.neon
+phpunit.dist.xml
+.php-cs-fixer.cache
+.php-cs-fixer.dist.php
+rector.php
+compose.yaml
