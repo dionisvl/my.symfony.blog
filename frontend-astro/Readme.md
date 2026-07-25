@@ -27,7 +27,7 @@ make up
 make down
 ```
 
-Dev URL: `http://<ASTRO_HOST>` (set via `ASTRO_HOST` in root `.env`, default: `phpqas.local`)
+Dev URL: `http://<MAIN_HOST>` (set via `MAIN_HOST` in root `.env`, default: `phpqas.local`)
 
 ### Test production build locally
 
@@ -39,7 +39,7 @@ To run a prod build locally against your dev environment (from repo root):
 make astro-build-local
 ```
 
-Site will be available at `http://$ASTRO_HOST` as usual. To go back to dev mode — `make up`.
+Site will be available at `http://$MAIN_HOST` as usual. To go back to dev mode — `make up`.
 
 ---
 
@@ -137,10 +137,10 @@ frontend-astro/
 
 | Host | Service | Notes |
 |------|---------|-------|
-| `$ASTRO_HOST` | `astro-frontend` | catch-all, priority 10 |
-| `$ASTRO_HOST` + `/admin/*`, `/login`, `/logout` | `symfony` | priority 50 |
+| `$MAIN_HOST` | `astro-frontend` | catch-all, priority 10 |
+| `$MAIN_HOST` + `/admin/*`, `/login`, `/logout` | `symfony` | priority 50 |
 | `$API_GO_HOST` | `api-go` | dedicated subdomain, all paths |
 
-Hosts are configured via `ASTRO_HOST` and `API_GO_HOST` in the root `.env`.
+Hosts are configured via `MAIN_HOST` and `API_GO_HOST` in the root `.env`.
 
 Astro proxies API calls server-side to `api-go` via `API_URL` (see `frontend-astro/.env`). Write endpoints (`/api/comment`, `/api/subscribe`, `/api/send-contact`, `/api/postlike/*`) are handled by Astro API routes — the browser never calls `api-go` directly and never sees `API_KEY`.

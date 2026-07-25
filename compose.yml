@@ -38,7 +38,7 @@ services:
       - path: ./.env
         required: true
     environment:
-      PHP_IDE_CONFIG: serverName=${ASTRO_HOST}
+      PHP_IDE_CONFIG: serverName=${MAIN_HOST}
       DATABASE_URL: "postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?serverVersion=17&charset=utf8"
       SERVER_NAME: ":80"
       MAX_REQUESTS: "500"
