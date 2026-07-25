@@ -82,7 +82,7 @@ final readonly class AdminPostManager
         }
 
         if ([] !== $payload->tags) {
-            $tagIds = array_values(array_filter($payload->tags, static fn($id): bool => null !== $id && '' !== $id));
+            $tagIds = array_values(array_filter($payload->tags, static fn ($id): bool => null !== $id && '' !== $id));
             $tags = [] === $tagIds ? [] : $this->tagRepository->findBy(['id' => $tagIds]);
             $post->setTags($tags);
         } else {
@@ -90,7 +90,7 @@ final readonly class AdminPostManager
         }
 
         if ($payload->image instanceof UploadedFile) {
-            $uploadDir = $this->projectDir . '/public/storage/uploads';
+            $uploadDir = $this->projectDir.'/public/storage/uploads';
 
             if (!is_dir($uploadDir)) {
                 mkdir($uploadDir, 0755, true);

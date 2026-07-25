@@ -110,7 +110,7 @@ class Portfolio
             return '/storage/blog_images/no-image.png';
         }
 
-        return '/storage/uploads/portfolio/' . $this->image;
+        return '/storage/uploads/portfolio/'.$this->image;
     }
 
     public function getImage(): ?string
@@ -226,7 +226,7 @@ class Portfolio
             return;
         }
 
-        $filepath = $uploadDir . '/' . $this->image;
+        $filepath = $uploadDir.'/'.$this->image;
 
         if (file_exists($filepath)) {
             unlink($filepath);

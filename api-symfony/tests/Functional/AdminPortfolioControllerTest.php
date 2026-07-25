@@ -44,8 +44,8 @@ final class AdminPortfolioControllerTest extends DatabaseWebTestCase
         self::assertSame($status ? 1 : 0, $portfolio->getStatus());
         self::assertSame($featured ? 1 : 0, $portfolio->getIsFeatured());
 
-        $newTitle = $title . ' Updated';
-        $this->client->request(Request::METHOD_POST, '/admin/portfolios/' . $portfolio->getId() . '/update', [
+        $newTitle = $title.' Updated';
+        $this->client->request(Request::METHOD_POST, '/admin/portfolios/'.$portfolio->getId().'/update', [
             'title' => $newTitle,
             'content' => $content,
             'description' => $description,
@@ -60,7 +60,7 @@ final class AdminPortfolioControllerTest extends DatabaseWebTestCase
         self::assertNotNull($updated);
         self::assertSame($newTitle, $updated->getTitle());
 
-        $this->client->request(Request::METHOD_POST, '/admin/portfolios/' . $portfolio->getId() . '/delete');
+        $this->client->request(Request::METHOD_POST, '/admin/portfolios/'.$portfolio->getId().'/delete');
         $this->assertResponseRedirects('/admin/portfolios/');
 
         $this->em->clear();
@@ -107,7 +107,7 @@ final class AdminPortfolioControllerTest extends DatabaseWebTestCase
         $this->em->flush();
 
         $this->client->loginUser($user);
-        $this->client->request(Request::METHOD_GET, '/admin/portfolios/' . $portfolio->getId() . '/edit');
+        $this->client->request(Request::METHOD_GET, '/admin/portfolios/'.$portfolio->getId().'/edit');
 
         $this->assertResponseIsSuccessful();
         $action = self::getContainer()->get('router')->generate(
@@ -129,5 +129,49 @@ final class AdminPortfolioControllerTest extends DatabaseWebTestCase
         $this->assertResponseStatusCodeSame(422);
         self::assertJson($this->client->getResponse()->getContent());
         self::assertStringContainsString('title', $this->client->getResponse()->getContent());
+    }
+
+    public function testCreatePortfolioWithImageUpload(): void
+    {
+        $user = $this->createAdminUser();
+        $this->client->loginUser($user);
+
+        $tmp = tempnam(sys_get_temp_dir(), 'upl').'.png';
+        file_put_contents($tmp, base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=='));
+        $file = new \Symfony\Component\HttpFoundation\File\UploadedFile($tmp, 'test.png', 'image/png', null, true);
+
+        try {
+            $this->client->request(Request::METHOD_POST, '/admin/portfolios/store', [
+                'title' => 'Portfolio with Image',
+                'content' => 'Test content',
+                'description' => 'Test description',
+                'status' => '1',
+            ], [
+                'image' => $file,
+            ]);
+
+            $this->assertResponseRedirects('/admin/portfolios/');
+
+            $this->em->clear();
+            $portfolio = $this->em->getRepository(Portfolio::class)->findOneBy(['title' => 'Portfolio with Image']);
+            self::assertNotNull($portfolio);
+            self::assertNotNull($portfolio->getImage());
+
+            $projectDir = self::getContainer()->getParameter('kernel.project_dir');
+            $uploadedFile = $this->em->getRepository(Portfolio::class)->find($portfolio->getId())->getImage();
+            $uploadPath = $projectDir.'/public/storage/uploads/portfolio/'.$uploadedFile;
+            self::assertFileExists($uploadPath);
+
+            $this->client->request(Request::METHOD_POST, '/admin/portfolios/'.$portfolio->getId().'/delete');
+            $this->assertResponseRedirects('/admin/portfolios/');
+
+            $this->em->clear();
+            $deleted = $this->em->getRepository(Portfolio::class)->find($portfolio->getId());
+            self::assertNull($deleted);
+        } finally {
+            if (file_exists($tmp)) {
+                unlink($tmp);
+            }
+        }
     }
 }

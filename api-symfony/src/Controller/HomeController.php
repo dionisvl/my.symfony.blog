@@ -29,7 +29,7 @@ final class HomeController extends AbstractController
     #[Route('/', name: 'home')]
     public function index(Request $request): Response
     {
-        $page = max(1, (int)$request->query->get('page', 1));
+        $page = max(1, (int) $request->query->get('page', 1));
         $perPage = 10;
         $data = $this->homePageQuery->getIndexViewData();
 
@@ -58,7 +58,7 @@ final class HomeController extends AbstractController
             throw $this->createNotFoundException('Post not found');
         }
 
-        $cookieName = 'viewedPostToday' . $post->getId();
+        $cookieName = 'viewedPostToday'.$post->getId();
         $isViewed = $request->cookies->has($cookieName);
 
         if (!$isViewed) {
@@ -102,7 +102,7 @@ final class HomeController extends AbstractController
             $query = $request->request->get('q', '');
         }
 
-        $query = trim((string)$query);
+        $query = trim((string) $query);
         $posts = [];
 
         if ('' !== $query) {
@@ -125,7 +125,7 @@ final class HomeController extends AbstractController
             throw $this->createNotFoundException('Tag not found');
         }
 
-        $page = max(1, (int)$request->query->get('page', 1));
+        $page = max(1, (int) $request->query->get('page', 1));
         $perPage = 10;
         $paginated = $this->homePageQuery->findPublishedByTagSlugPaginated($slug, $page, $perPage);
 
@@ -146,7 +146,7 @@ final class HomeController extends AbstractController
             throw $this->createNotFoundException('Category not found');
         }
 
-        $page = max(1, (int)$request->query->get('page', 1));
+        $page = max(1, (int) $request->query->get('page', 1));
         $perPage = 10;
         $paginated = $this->homePageQuery->findPublishedByCategorySlugPaginated($slug, $page, $perPage);
 
@@ -163,7 +163,7 @@ final class HomeController extends AbstractController
      */
     private function buildPagination(int $page, int $perPage, int $total): array
     {
-        $totalPages = max(1, (int)ceil($total / $perPage));
+        $totalPages = max(1, (int) ceil($total / $perPage));
         $currentPage = min($page, $totalPages);
 
         return [

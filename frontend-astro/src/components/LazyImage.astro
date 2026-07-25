@@ -1,0 +1,26 @@
+---
+interface Props {
+  src: string;
+  alt?: string;
+  class?: string;
+  width?: string | number;
+  height?: string | number;
+  srcset?: string;
+}
+
+const { src, alt = "", class: className = "", width, height, srcset } = Astro.props;
+const classes = ["lazy-real", className].filter(Boolean).join(" ");
+---
+
+<span class="lazy-wrap">
+  <img
+    class={classes}
+    src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=="
+    data-src={src}
+    {...(srcset && { "data-srcset": srcset })}
+    alt={alt}
+    {...(width && { width: String(width) })}
+    {...(height && { height: String(height) })}
+  />
+  <span class="lazy-placeholder" aria-hidden="true"></span>
+</span>

@@ -20,7 +20,9 @@ abstract class DatabaseWebTestCase extends WebTestCase
     {
         self::ensureKernelShutdown();
         $this->client = static::createClient();
-        $this->em = self::getContainer()->get('doctrine')->getManager();
+        $entityManager = self::getContainer()->get('doctrine')->getManager();
+        \assert($entityManager instanceof EntityManagerInterface);
+        $this->em = $entityManager;
         $this->resetDatabase();
     }
 
@@ -55,7 +57,6 @@ abstract class DatabaseWebTestCase extends WebTestCase
     protected function setPrivate(object $object, string $property, mixed $value): void
     {
         $ref = new \ReflectionProperty($object, $property);
-        $ref->setAccessible(true);
         $ref->setValue($object, $value);
     }
 }

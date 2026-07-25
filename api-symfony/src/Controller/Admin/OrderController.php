@@ -42,14 +42,14 @@ final class OrderController extends AbstractController
         $spreadsheet = $this->ordersListPresenter->getExcelOrdersList();
         $writer = IOFactory::createWriter($spreadsheet, 'Xlsx');
 
-        $filename = 'orders_' . new \DateTime()->format('Y-m-d') . '.xlsx';
+        $filename = 'orders_'.new \DateTime()->format('Y-m-d').'.xlsx';
 
         $response = new StreamedResponse(static function () use ($writer): void {
             $writer->save('php://output');
         });
 
         $response->headers->set('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-        $response->headers->set('Content-Disposition', 'attachment; filename="' . $filename . '"');
+        $response->headers->set('Content-Disposition', 'attachment; filename="'.$filename.'"');
 
         return $response;
     }
@@ -85,7 +85,7 @@ final class OrderController extends AbstractController
 
     #[Route('/admin/orders/{id}/update', name: 'admin_orders_update', requirements: ['id' => '\d+'], methods: [
         'POST',
-        'PUT'
+        'PUT',
     ])]
     public function update(int $id, #[MapRequestPayload] AdminOrderPayload $payload): RedirectResponse
     {
@@ -103,7 +103,7 @@ final class OrderController extends AbstractController
 
     #[Route('/admin/orders/{id}/delete', name: 'admin_orders_delete', requirements: ['id' => '\d+'], methods: [
         'POST',
-        'DELETE'
+        'DELETE',
     ])]
     public function delete(int $id): RedirectResponse
     {

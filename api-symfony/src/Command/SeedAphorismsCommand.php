@@ -44,8 +44,8 @@ final class SeedAphorismsCommand extends Command
             return Command::FAILURE;
         }
 
-        $targetCount = max(1, (int)$input->getOption('count'));
-        $currentCount = (int)$this->connection->fetchOne('SELECT COUNT(id) FROM aphorism');
+        $targetCount = max(1, (int) $input->getOption('count'));
+        $currentCount = (int) $this->connection->fetchOne('SELECT COUNT(id) FROM aphorism');
 
         if ($currentCount >= $targetCount) {
             $io->success(\sprintf('Aphorisms already present: %d.', $currentCount));

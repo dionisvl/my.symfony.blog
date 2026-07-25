@@ -67,14 +67,13 @@ final class PostController extends AbstractController
 
     #[Route('/admin/posts/{id}/update', name: 'admin_posts_update', requirements: ['id' => '\d+'], methods: [
         'POST',
-        'PUT'
+        'PUT',
     ])]
     public function update(
         int $id,
         #[MapRequestPayload] AdminPostPayload $payload,
         #[MapUploadedFile(name: 'image')] ?UploadedFile $image = null,
-    ): RedirectResponse
-    {
+    ): RedirectResponse {
         $post = $this->postRepository->find($id);
 
         if (!$post instanceof Post) {
@@ -91,7 +90,7 @@ final class PostController extends AbstractController
 
     #[Route('/admin/posts/{id}/delete', name: 'admin_posts_delete', requirements: ['id' => '\d+'], methods: [
         'POST',
-        'DELETE'
+        'DELETE',
     ])]
     public function delete(int $id): RedirectResponse
     {
@@ -111,8 +110,7 @@ final class PostController extends AbstractController
     public function store(
         #[MapRequestPayload] AdminPostPayload $payload,
         #[MapUploadedFile(name: 'image')] ?UploadedFile $image = null,
-    ): RedirectResponse
-    {
+    ): RedirectResponse {
         $payload->image = $image;
 
         $this->postManager->create($payload);

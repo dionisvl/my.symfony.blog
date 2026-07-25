@@ -402,7 +402,7 @@ class Product
             return '/storage/shop_uploads/no-image.png';
         }
 
-        return '/storage/shop_uploads/' . $value;
+        return '/storage/shop_uploads/'.$value;
     }
 
     public function uploadImage(
@@ -432,7 +432,7 @@ class Product
             return;
         }
 
-        $filepath = $uploadDir . '/' . $value;
+        $filepath = $uploadDir.'/'.$value;
 
         if (file_exists($filepath)) {
             unlink($filepath);

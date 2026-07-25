@@ -21,13 +21,13 @@ final class LoginThrottleTest extends DatabaseWebTestCase
 
     public function testLoginThrottleAfterMaxAttempts(): void
     {
-        $email = 'throttle-test-' . uniqid() . '@example.com';
+        $email = 'throttle-test-'.uniqid().'@example.com';
 
         // Make exactly 5 failed attempts
         for ($i = 0; $i < 5; ++$i) {
             $this->client->request(Request::METHOD_POST, '/login', [
                 '_username' => $email,
-                '_password' => 'wrong_password_' . $i,
+                '_password' => 'wrong_password_'.$i,
                 '_csrf_token' => $this->getCsrfToken($this->client),
             ]);
 
@@ -52,7 +52,7 @@ final class LoginThrottleTest extends DatabaseWebTestCase
     public function testMultipleUsersHaveIndependentLimits(): void
     {
         // User 1 makes some attempts
-        $user1 = 'user1-' . uniqid() . '@example.com';
+        $user1 = 'user1-'.uniqid().'@example.com';
         $this->client->request(Request::METHOD_POST, '/login', [
             '_username' => $user1,
             '_password' => 'wrong',
@@ -61,7 +61,7 @@ final class LoginThrottleTest extends DatabaseWebTestCase
         $this->assertResponseRedirects('/login');
 
         // User 2 should not be affected by user 1's attempts
-        $user2 = 'user2-' . uniqid() . '@example.com';
+        $user2 = 'user2-'.uniqid().'@example.com';
         $this->client->request(Request::METHOD_POST, '/login', [
             '_username' => $user2,
             '_password' => 'wrong',

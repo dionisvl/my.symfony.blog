@@ -1,0 +1,292 @@
+---
+export const prerender = false;
+
+import Layout from "../../layouts/Layout.astro";
+import Sidebar from "../../components/Sidebar.astro";
+import LazyImage from "../../components/LazyImage.astro";
+import { getPost, ApiClientError } from "../../lib/api";
+import type { PostResponse } from "../../lib/types";
+import { formatDate, fromNow, excerpt } from "../../lib/format";
+import { absoluteUrl } from "../../lib/url";
+
+const { slug } = Astro.params;
+
+let data: PostResponse;
+try {
+  data = await getPost(slug!, Astro);
+} catch (error) {
+  if (error instanceof ApiClientError && error.status === 404) {
+    Astro.response.status = 404;
+    return Astro.rewrite("/404");
+  }
+  throw error;
+}
+
+const post = data.post;
+const defaultDescription =
+  "Stay updated with the latest trends in Web3 development, software engineering tips, and best coding practices for modern applications.";
+const shortDescription =
+  excerpt(post.description || post.content, 157) || defaultDescription;
+const title = `${post.title} - Web3 Blog`;
+const absoluteImage = absoluteUrl(post.image_url);
+
+const shareUrl = encodeURIComponent(absoluteUrl(`/post/${post.slug}`));
+const shareTitle = encodeURIComponent(post.title);
+---
+
+<Layout
+  title={title}
+  description={shortDescription}
+  image={absoluteImage}
+  ogType="article"
+  canonical={absoluteUrl(`/post/${post.slug}`)}
+>
+  <div class="w-full md:w-3/4 pr-0 md:pr-6">
+    <article
+      class="bg-gray-800 rounded-lg shadow-sm overflow-hidden border border-gray-700"
+    >
+      {
+        post.image_url && (
+          <div class="w-full h-64 md:h-96 flex items-center justify-center bg-gray-700 overflow-hidden [&>.lazy-wrap]:w-full [&>.lazy-wrap]:h-full">
+            <LazyImage
+              src={post.image_url}
+              alt={post.title}
+              class="w-full h-full object-contain"
+              height="384"
+            />
+          </div>
+        )
+      }
+
+      <div class="p-6">
+        <header class="text-center mb-6">
+          {
+            post.category && (
+              <h6 class="text-sm mb-2">
+                <a
+                  href={`/category/${post.category.slug}`}
+                  class="text-blue-500 hover:text-blue-700"
+                >
+                  {post.category.title}
+                </a>
+              </h6>
+            )
+          }
+          <h1 class="text-3xl font-bold text-white mb-2">{post.title}</h1>
+        </header>
+
+        <div class="prose max-w-none">
+          <Fragment set:html={post.content} />
+        </div>
+
+        {
+          data.aphorism && (
+            <div class="mt-8">
+              <h4 class="font-semibold mb-2 text-white">Quote of the day:</h4>
+              <div class="border-2 rounded-sm p-2 m-2 flex items-center bg-gray-700 text-white">
+                {data.aphorism.text}
+              </div>
+            </div>
+          )
+        }
+
+        {
+          post.tags && post.tags.length > 0 && (
+            <div class="flex flex-wrap mt-6 mb-4">
+              {post.tags.map((tag) => (
+                <a
+                  href={`/tag/${tag.slug}`}
+                  class="bg-gray-700 hover:bg-gray-600 px-3 py-1 rounded-full text-sm mr-2 mb-2 transition text-white"
+                >
+                  {tag.title}
+                </a>
+              ))}
+            </div>
+          )
+        }
+
+        <div
+          class="flex justify-between items-center text-sm text-gray-400 pt-4 border-t border-gray-700"
+        >
+          <span>
+            {
+              post.author && (
+                <>
+                  By{" "}
+                  <a href="#" class="hover:text-blue-400">
+                    {post.author.name}
+                  </a>{" "}
+                </>
+              )
+            }
+            On <b>{formatDate(post.created_at)}</b>
+          </span>
+
+          <div class="flex items-center">
+            <span class="flex items-center mr-4">
+              <i class="fas fa-eye mr-1"></i>
+              {post.views_count}
+            </span>
+            <a
+              class="flex items-center w-full sm:w-auto group"
+              onclick="Likes.toggle(this,event);"
+              data-post_id={post.id}
+              href="#"
+              title="Like"
+            >
+              <i
+                class="far fa-heart text-red-500 mr-1 heart-icon transition-transform duration-500"
+              ></i>
+              <span
+                class="like_button_count transition-colors duration-500 group-hover:text-blue-400"
+              >
+                {post.likes_count}
+              </span>
+            </a>
+
+            <div class="ml-4 flex items-center space-x-2">
+              <a
+                href={`https://t.me/share/url?url=${shareUrl}&text=${shareTitle}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                class="text-gray-400 hover:text-blue-400 transition-colors"
+                title="Share on Telegram"
+                aria-label="Share on Telegram"
+              >
+                <i class="fab fa-telegram" aria-hidden="true"></i>
+              </a>
+              <a
+                href={`https://twitter.com/intent/tweet?url=${shareUrl}&text=${shareTitle}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                class="text-gray-400 hover:text-blue-400 transition-colors"
+                title="Share on X (Twitter)"
+                aria-label="Share on X (Twitter)"
+              >
+                <i class="fab fa-twitter" aria-hidden="true"></i>
+              </a>
+              <a
+                href={`https://www.linkedin.com/sharing/share-offsite/?url=${shareUrl}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                class="text-gray-400 hover:text-blue-400 transition-colors"
+                title="Share on LinkedIn"
+                aria-label="Share on LinkedIn"
+              >
+                <i class="fab fa-linkedin" aria-hidden="true"></i>
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </article>
+
+    <!-- Comments Section -->
+    <div class="mt-8">
+      {
+        post.comments?.map((comment) => (
+          <div class="bg-gray-800 p-4 mb-4 rounded-lg border border-gray-700 flex">
+            <div class="mr-4 flex-shrink-0">
+              <img
+                class="rounded-full w-12 h-12 object-cover"
+                src="/storage/blog_images/comment.jpg"
+                alt={comment.author_name}
+              />
+            </div>
+            <div>
+              <h5 class="font-semibold text-white">{comment.author_name}</h5>
+              <p class="text-xs text-gray-400 mb-2">
+                {fromNow(comment.created_at)}
+              </p>
+              <p class="text-gray-300">{comment.text}</p>
+            </div>
+          </div>
+        ))
+      }
+    </div>
+
+    <!-- Comment Form -->
+    <div class="bg-gray-800 p-6 mt-8 rounded-lg border border-gray-700">
+      <h4 class="text-xl font-semibold mb-4 text-white">Leave a reply</h4>
+
+      <div id="comment-flash"></div>
+
+      <form class="w-full" role="form" method="post" action="/api/comment" id="comment-form">
+        <input type="hidden" name="post_id" value={post.id} />
+        <div class="mb-4">
+          {/* Honeypot field - should remain empty */}
+          <input type="text" name="honeypot" value="" style="display:none;" />
+
+          {/* Anti-bot counter */}
+          <input type="hidden" class="countMe" name="countMe" value="0" />
+
+          <textarea
+            required
+            class="w-full border border-gray-600 bg-gray-700 text-white rounded-md p-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder-gray-400"
+            rows="4"
+            name="message"
+            placeholder="Write some comment"
+            onkeyup="count_keyup()"></textarea>
+        </div>
+        <button
+          class="bg-blue-500 hover:bg-blue-600 text-white py-2 px-6 rounded-md transition duration-200 font-medium"
+        >
+          Post Comment
+        </button>
+      </form>
+
+      <script>
+        const form = document.getElementById(
+          "comment-form",
+        ) as HTMLFormElement | null;
+        const flashDiv = document.getElementById("comment-flash");
+
+        if (form) {
+          form.addEventListener("submit", async (e) => {
+            e.preventDefault();
+
+            const formData = new FormData(form);
+
+            try {
+              const response = await fetch("/api/comment", {
+                method: "POST",
+                body: formData,
+              });
+
+              const result = await response.json().catch(() => ({}));
+
+              if (response.ok) {
+                if (flashDiv) {
+                  flashDiv.innerHTML =
+                    '<div class="bg-green-500 text-white p-3 rounded mb-4">' +
+                    (result.message || "your comment will be added soon") +
+                    "</div>";
+                }
+                form.reset();
+                form
+                  .querySelectorAll<HTMLInputElement>('input[name="countMe"]')
+                  .forEach((input) => (input.value = "0"));
+              } else if (flashDiv) {
+                flashDiv.innerHTML =
+                  '<div class="bg-red-500 text-white p-3 rounded mb-4">' +
+                  (result.message || "Failed to post comment.") +
+                  "</div>";
+              }
+            } catch {
+              if (flashDiv) {
+                flashDiv.innerHTML =
+                  '<div class="bg-red-500 text-white p-3 rounded mb-4">Failed to post comment.</div>';
+              }
+            }
+          });
+        }
+      </script>
+    </div>
+  </div>
+
+  <Sidebar
+    categories={data.categories}
+    featuredPosts={data.featured_posts}
+    recentPosts={data.recent_posts}
+  />
+</Layout>

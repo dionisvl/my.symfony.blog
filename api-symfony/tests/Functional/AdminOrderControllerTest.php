@@ -37,8 +37,8 @@ final class AdminOrderControllerTest extends DatabaseWebTestCase
         self::assertNotNull($order);
         self::assertSame($price, $order->getPrice());
 
-        $newTitle = $title . ' Updated';
-        $this->client->request(Request::METHOD_POST, '/admin/orders/' . $order->getId() . '/update', [
+        $newTitle = $title.' Updated';
+        $this->client->request(Request::METHOD_POST, '/admin/orders/'.$order->getId().'/update', [
             'title' => $newTitle,
             'price' => $price,
             'contents' => $contents,
@@ -52,7 +52,7 @@ final class AdminOrderControllerTest extends DatabaseWebTestCase
         self::assertNotNull($updated);
         self::assertSame($newTitle, $updated->getTitle());
 
-        $this->client->request(Request::METHOD_POST, '/admin/orders/' . $order->getId() . '/delete');
+        $this->client->request(Request::METHOD_POST, '/admin/orders/'.$order->getId().'/delete');
         $this->assertResponseRedirects('/admin/orders/');
 
         $this->em->clear();
@@ -99,7 +99,7 @@ final class AdminOrderControllerTest extends DatabaseWebTestCase
         $this->em->flush();
 
         $this->client->loginUser($user);
-        $this->client->request(Request::METHOD_GET, '/admin/orders/' . $order->getId() . '/edit');
+        $this->client->request(Request::METHOD_GET, '/admin/orders/'.$order->getId().'/edit');
 
         $this->assertResponseIsSuccessful();
         $action = self::getContainer()->get('router')->generate('admin_orders_update', ['id' => $order->getId()]);

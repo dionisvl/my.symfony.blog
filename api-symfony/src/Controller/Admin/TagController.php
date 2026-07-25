@@ -64,7 +64,7 @@ final class TagController extends AbstractController
 
     #[Route('/admin/tags/{id}/update', name: 'admin_tags_update', requirements: ['id' => '\d+'], methods: [
         'POST',
-        'PUT'
+        'PUT',
     ])]
     public function update(int $id, #[MapRequestPayload] AdminTagPayload $payload): RedirectResponse
     {
@@ -82,7 +82,7 @@ final class TagController extends AbstractController
 
     #[Route('/admin/tags/{id}/delete', name: 'admin_tags_delete', requirements: ['id' => '\d+'], methods: [
         'POST',
-        'DELETE'
+        'DELETE',
     ])]
     public function delete(int $id): RedirectResponse
     {

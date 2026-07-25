@@ -20,6 +20,9 @@ services:
       - "--accesslog=true"
       - "--accesslog.filepath=/var/log/traefik/access.log"
       - "--accesslog.format=json"
+      - "--serversTransport.forwardingTimeouts.dialTimeout=2s"
+      - "--serversTransport.forwardingTimeouts.idleConnTimeout=90s"
+      - "--entrypoints.web.transport.respondingTimeouts.idleTimeout=180s"
     ports:
       - "80:80"
     expose:
@@ -31,15 +34,11 @@ services:
       - app-network
 
   symfony:
-    build:
-      context: ./api-symfony
-      dockerfile: ./Dockerfile
-      target: dev
     env_file:
       - path: ./.env
         required: true
     environment:
-      PHP_IDE_CONFIG: serverName=${SERVER_NAME}
+      PHP_IDE_CONFIG: serverName=${MAIN_HOST}
       DATABASE_URL: "postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?serverVersion=17&charset=utf8"
       SERVER_NAME: ":80"
       MAX_REQUESTS: "500"
@@ -49,14 +48,11 @@ services:
       - "443"
       - "443/udp"
     volumes:
-      - ./api-symfony:/app:rw
       - ./api-symfony/public/storage:/app/public/storage:rw
       - ./api-symfony/Caddyfile:/etc/caddy/Caddyfile:ro
     command: sh -c "php bin/console cache:warmup --no-interaction && frankenphp run --config /etc/caddy/Caddyfile"
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.symfony.rule=Host(`blog.test`)"
-      - "traefik.http.services.symfony.loadbalancer.server.port=80"
+    # Traefik routing for Symfony is defined per-environment in the override files
+    # (compose.override.dev.yaml / compose.override.prod.yaml) so routes never clash.
     networks:
       - app-network
     restart: unless-stopped
@@ -69,6 +65,40 @@ services:
       timeout: 3s
       retries: 6
       start_period: 30s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  api-go:
+    build:
+      context: ./api-go
+      dockerfile: ./Dockerfile
+    env_file:
+      - path: ./.env
+        required: true
+    environment:
+      DATABASE_URL: "postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?sslmode=disable"
+      API_KEY: "${GO_API_KEY}"
+      APP_ENV: "${APP_ENV}"
+    expose:
+      - "8081"
+    volumes:
+      - ./api-symfony/public/seo:/seo:ro
+      - ./api-symfony/public/storage:/storage:ro
+    networks:
+      - app-network
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://127.0.0.1:8081/api/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
     logging:
       driver: "json-file"
       options:
@@ -92,8 +122,6 @@ services:
         required: true
       - path: ./.env.local
         required: false
-    ports:
-      - "${DB_PORT_EXTERNAL}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
@@ -165,6 +193,19 @@ services:
       - app-network
     restart: unless-stopped
 
+  astro-frontend:
+    environment:
+      API_KEY: "${GO_API_KEY}"
+      PORT: "4321"
+      HOST: "0.0.0.0"
+    expose:
+      - "4321"
+    networks:
+      - app-network
+    depends_on:
+      api-go:
+        condition: service_healthy
+
 networks:
   app-network:
     driver: bridge
@@ -172,3 +213,4 @@ networks:
 volumes:
   postgres_data:
   victoria_logs_data:
+  astro_node_modules:

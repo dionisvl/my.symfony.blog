@@ -19,7 +19,7 @@ final readonly class AphorismQuery
      */
     public function findRandom(): ?array
     {
-        $count = (int)$this->connection->fetchOne('SELECT COUNT(id) FROM aphorism');
+        $count = (int) $this->connection->fetchOne('SELECT COUNT(id) FROM aphorism');
 
         if (0 === $count) {
             return null;
@@ -38,8 +38,8 @@ final readonly class AphorismQuery
         }
 
         return [
-            'id' => (int)$row['id'],
-            'detail_text' => (string)$row['detail_text'],
+            'id' => (int) $row['id'],
+            'detail_text' => (string) $row['detail_text'],
         ];
     }
 }

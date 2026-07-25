@@ -9,6 +9,9 @@ services:
       - "--entrypoints.web.address=:80"
       - "--entrypoints.websecure.address=:443"
       - "--entrypoints.websecure.http3"
+      - "--entrypoints.web.http.redirections.entrypoint.to=websecure"
+      - "--entrypoints.web.http.redirections.entrypoint.scheme=https"
+      - "--entrypoints.web.http.redirections.entrypoint.permanent=true"
       - "--tracing.otlp=true"
       - "--tracing.otlp.http=true"
       - "--tracing.otlp.http.endpoint=http://jaeger:4318/v1/traces"
@@ -29,7 +32,7 @@ services:
       - app-network
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.dashboard.rule=Host(`traefik.phpqa.ru`) || Host(`traefik.web3main.pro`)"
+      - "traefik.http.routers.dashboard.rule=Host(`traefik.${OLD_HOST}`) || Host(`traefik.${MAIN_HOST}`)"
       - "traefik.http.routers.dashboard.service=api@internal"
       - "traefik.http.routers.dashboard.entrypoints=websecure"
       - "traefik.http.routers.dashboard.middlewares=auth"
@@ -39,16 +42,16 @@ services:
   pets-app:
     image: ${DOCKER_REGISTRY_SERVER}/pets-app:latest
     volumes:
-      - /var/www/pets.phpqa.ru/app:/app:rw
+      - /home/pets.my.blog:/app:rwte
     labels:
       - "traefik.enable=true"
       # HTTP to HTTPS redirect
-      - "traefik.http.routers.pets-http.rule=Host(`pets.phpqa.ru`) || Host(`pets.web3main.pro`)"
+      - "traefik.http.routers.pets-http.rule=Host(`pets.${OLD_HOST}`) || Host(`pets.${MAIN_HOST}`)"
       - "traefik.http.routers.pets-http.entrypoints=web"
       #      - "traefik.http.routers.pets-http.middlewares=pets-https-redirect"
       #      - "traefik.http.middlewares.pets-https-redirect.redirectscheme.scheme=https"
       # HTTPS configuration
-      - "traefik.http.routers.pets-secure.rule=Host(`pets.phpqa.ru`) || Host(`pets.web3main.pro`)"
+      - "traefik.http.routers.pets-secure.rule=Host(`pets.${OLD_HOST}`) || Host(`pets.${MAIN_HOST}`)"
       - "traefik.http.routers.pets-secure.entrypoints=websecure"
       - "traefik.http.routers.pets-secure.tls=true"
       - "traefik.http.routers.pets-secure.tls.certresolver=myresolver"
@@ -66,26 +69,36 @@ services:
       - "traefik.enable=true"
 
       # OLD DOMAIN - HTTP - redirect to HTTPS
-      - "traefik.http.routers.symfony-old-http.rule=Host(`phpqa.ru`) || Host(`www.phpqa.ru`)"
+      - "traefik.http.routers.symfony-old-http.rule=Host(`${OLD_HOST}`) || Host(`www.${OLD_HOST}`)"
       - "traefik.http.routers.symfony-old-http.entrypoints=web"
       - "traefik.http.routers.symfony-old-http.service=symfony"
 
-      # OLD DOMAIN - HTTPS - redirect to web3main.pro
-      - "traefik.http.routers.symfony-old-https.rule=Host(`phpqa.ru`) || Host(`www.phpqa.ru`)"
+      # OLD DOMAIN - HTTPS - redirect to MAIN_HOST
+      - "traefik.http.routers.symfony-old-https.rule=Host(`${OLD_HOST}`) || Host(`www.${OLD_HOST}`)"
       - "traefik.http.routers.symfony-old-https.entrypoints=websecure"
       - "traefik.http.routers.symfony-old-https.tls.certresolver=myresolver"
       - "traefik.http.routers.symfony-old-https.service=symfony"
 
-      # NEW DOMAIN - HTTP → HTTPS redirect
-      - "traefik.http.routers.symfony-http.rule=Host(`web3main.pro`) || Host(`www.web3main.pro`)"
+      # NEW DOMAIN - Symfony serves ONLY admin/login/logout; public front is Astro.
+      # HTTP (admin area)
+      - "traefik.http.routers.symfony-http.rule=(Host(`${MAIN_HOST}`) || Host(`www.${MAIN_HOST}`)) && (PathPrefix(`/admin`) || Path(`/login`) || Path(`/logout`))"
       - "traefik.http.routers.symfony-http.entrypoints=web"
+      - "traefik.http.routers.symfony-http.priority=50"
       - "traefik.http.routers.symfony-http.service=symfony"
 
-      # NEW DOMAIN - HTTPS (main)
-      - "traefik.http.routers.symfony.rule=Host(`web3main.pro`) || Host(`www.web3main.pro`)"
+      # HTTPS (admin area, main)
+      - "traefik.http.routers.symfony.rule=(Host(`${MAIN_HOST}`) || Host(`www.${MAIN_HOST}`)) && (PathPrefix(`/admin`) || Path(`/login`) || Path(`/logout`))"
       - "traefik.http.routers.symfony.entrypoints=websecure"
+      - "traefik.http.routers.symfony.priority=50"
       - "traefik.http.routers.symfony.tls.certresolver=myresolver"
       - "traefik.http.routers.symfony.service=symfony"
+
+      # Admin-only static assets served by Symfony (Astro owns /css, /js front bundles).
+      - "traefik.http.routers.symfony-admin-assets.rule=(Host(`${MAIN_HOST}`) || Host(`www.${MAIN_HOST}`)) && PathPrefix(`/admin-assets`)"
+      - "traefik.http.routers.symfony-admin-assets.entrypoints=websecure"
+      - "traefik.http.routers.symfony-admin-assets.priority=70"
+      - "traefik.http.routers.symfony-admin-assets.tls.certresolver=myresolver"
+      - "traefik.http.routers.symfony-admin-assets.service=symfony"
 
       - "traefik.http.services.symfony.loadbalancer.server.port=80"
 
@@ -99,16 +112,77 @@ services:
       - "traefik.http.middlewares.vmui-redirect.redirectregex.replacement=https://vmui.web3main.pro/select/vmui/"
       - "traefik.http.middlewares.vmui-redirect.redirectregex.permanent=false"
       # HTTP
-      - "traefik.http.routers.vmui-http.rule=Host(`vmui.web3main.pro`)"
+      - "traefik.http.routers.vmui-http.rule=Host(`vmui.${MAIN_HOST}`)"
       - "traefik.http.routers.vmui-http.entrypoints=web"
       - "traefik.http.routers.vmui-http.middlewares=vmui-redirect@docker,vmui-ratelimit@docker"
       - "traefik.http.routers.vmui-http.service=vmui"
       # HTTPS
-      - "traefik.http.routers.vmui-https.rule=Host(`vmui.web3main.pro`)"
+      - "traefik.http.routers.vmui-https.rule=Host(`vmui.${MAIN_HOST}`)"
       - "traefik.http.routers.vmui-https.entrypoints=websecure"
       - "traefik.http.routers.vmui-https.tls.certresolver=myresolver"
       - "traefik.http.routers.vmui-https.middlewares=vmui-redirect@docker,vmui-ratelimit@docker"
       - "traefik.http.services.vmui.loadbalancer.server.port=8427"
+
+  api-go:
+    env_file:
+      - path: ./api-go/.env.production
+        required: true
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.api-go-direct-http.rule=Host(`api.${MAIN_HOST}`)"
+      - "traefik.http.routers.api-go-direct-http.priority=10"
+      - "traefik.http.routers.api-go-direct-http.entrypoints=web"
+      - "traefik.http.routers.api-go-direct-http.service=api-go"
+      - "traefik.http.routers.api-go-direct.rule=Host(`api.${MAIN_HOST}`)"
+      - "traefik.http.routers.api-go-direct.priority=10"
+      - "traefik.http.routers.api-go-direct.entrypoints=websecure"
+      - "traefik.http.routers.api-go-direct.tls.certresolver=myresolver"
+      - "traefik.http.routers.api-go-direct.service=api-go"
+      # Serve /storage/* (uploaded images, blog assets) from api-go on the public host.
+      - "traefik.http.routers.api-go-storage-http.rule=(Host(`${MAIN_HOST}`) || Host(`www.${MAIN_HOST}`)) && PathPrefix(`/storage`)"
+      - "traefik.http.routers.api-go-storage-http.priority=60"
+      - "traefik.http.routers.api-go-storage-http.entrypoints=web"
+      - "traefik.http.routers.api-go-storage-http.service=api-go"
+      - "traefik.http.routers.api-go-storage.rule=(Host(`${MAIN_HOST}`) || Host(`www.${MAIN_HOST}`)) && PathPrefix(`/storage`)"
+      - "traefik.http.routers.api-go-storage.priority=60"
+      - "traefik.http.routers.api-go-storage.entrypoints=websecure"
+      - "traefik.http.routers.api-go-storage.tls.certresolver=myresolver"
+      - "traefik.http.routers.api-go-storage.service=api-go"
+      # Serve SEO files from api-go on the public host.
+      - "traefik.http.routers.api-go-seo.rule=(Host(`${MAIN_HOST}`) || Host(`www.${MAIN_HOST}`)) && (Path(`/sitemap.xml`) || Path(`/robots.txt`) || Path(`/llms.txt`))"
+      - "traefik.http.routers.api-go-seo.priority=80"
+      - "traefik.http.routers.api-go-seo.entrypoints=websecure"
+      - "traefik.http.routers.api-go-seo.tls.certresolver=myresolver"
+      - "traefik.http.routers.api-go-seo.service=api-go"
+      - "traefik.http.services.api-go.loadbalancer.server.port=8081"
+
+  astro-frontend:
+    build:
+      context: ./frontend-astro
+      dockerfile: ./Dockerfile
+      target: prod
+      args:
+        PUBLIC_SITE_URL: https://web3main.pro
+        PUBLIC_SITE_TITLE: web3main.pro
+        PUBLIC_SITE_AUTHOR: Web3main LLC
+        PUBLIC_SITE_DESC: Stay updated with the latest trends in Web3 development, software engineering tips, and best coding practices for modern applications.
+        PUBLIC_GOOGLE_SITE_VERIFICATION: ${PUBLIC_GOOGLE_SITE_VERIFICATION:-}
+    env_file:
+      - ./frontend-astro/.env.production
+    labels:
+      - "traefik.enable=true"
+      # HTTP
+      - "traefik.http.routers.astro-http.rule=Host(`${MAIN_HOST}`) || Host(`www.${MAIN_HOST}`)"
+      - "traefik.http.routers.astro-http.entrypoints=web"
+      - "traefik.http.routers.astro-http.priority=10"
+      - "traefik.http.routers.astro-http.service=astro"
+      # HTTPS
+      - "traefik.http.routers.astro.rule=Host(`${MAIN_HOST}`) || Host(`www.${MAIN_HOST}`)"
+      - "traefik.http.routers.astro.entrypoints=websecure"
+      - "traefik.http.routers.astro.tls.certresolver=myresolver"
+      - "traefik.http.routers.astro.priority=10"
+      - "traefik.http.routers.astro.service=astro"
+      - "traefik.http.services.astro.loadbalancer.server.port=4321"
 
   jaeger:
     labels:
@@ -126,3 +200,6 @@ services:
       - "traefik.http.routers.jaeger-https.service=jaeger"
       - "traefik.http.routers.jaeger-https.middlewares=jaeger-auth@docker"
       - "traefik.http.services.jaeger.loadbalancer.server.port=16686"
+
+volumes:
+  astro_node_modules:

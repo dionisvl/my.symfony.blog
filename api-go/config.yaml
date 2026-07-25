@@ -1,0 +1,17 @@
+server:
+  port: 8081
+  read_timeout: 5s
+  write_timeout: 10s
+  shutdown_timeout: 15s
+
+database:
+  max_open_conns: 10
+  max_idle_conns: 5
+  conn_max_lifetime: 5m
+
+app:
+  env: dev
+
+files:
+  seo_dir: /seo
+  storage_dir: /storage

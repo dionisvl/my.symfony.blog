@@ -32,7 +32,7 @@ final class AdminIncomingControllerTest extends DatabaseWebTestCase
         $this->em->flush();
 
         $this->client->loginUser($user);
-        $this->client->request(Request::METHOD_GET, '/admin/incomings/' . $incoming->getId() . '/toggle');
+        $this->client->request(Request::METHOD_GET, '/admin/incomings/'.$incoming->getId().'/toggle');
 
         $this->assertResponseRedirects('/admin/incomings/');
 
@@ -41,7 +41,7 @@ final class AdminIncomingControllerTest extends DatabaseWebTestCase
         self::assertNotNull($updated);
         self::assertSame(1 === $status ? 0 : 1, $updated->getStatus());
 
-        $this->client->request(Request::METHOD_POST, '/admin/incomings/' . $incoming->getId() . '/delete');
+        $this->client->request(Request::METHOD_POST, '/admin/incomings/'.$incoming->getId().'/delete');
         $this->assertResponseRedirects('/admin/incomings/');
 
         $this->em->clear();

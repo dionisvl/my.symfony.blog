@@ -53,8 +53,8 @@ final class AdminProductControllerTest extends DatabaseWebTestCase
         self::assertNotNull($product);
         self::assertSame($price, $product->getPrice());
 
-        $newTitle = $title . ' Updated';
-        $this->client->request(Request::METHOD_POST, '/admin/products/' . $product->getId() . '/update', [
+        $newTitle = $title.' Updated';
+        $this->client->request(Request::METHOD_POST, '/admin/products/'.$product->getId().'/update', [
             'title' => $newTitle,
             'detail_text' => $detailText,
             'price' => $price,
@@ -69,7 +69,7 @@ final class AdminProductControllerTest extends DatabaseWebTestCase
         self::assertNotNull($updated);
         self::assertSame($newTitle, $updated->getTitle());
 
-        $this->client->request(Request::METHOD_POST, '/admin/products/' . $product->getId() . '/delete');
+        $this->client->request(Request::METHOD_POST, '/admin/products/'.$product->getId().'/delete');
         $this->assertResponseRedirects('/admin/products/');
 
         $this->em->clear();
@@ -116,7 +116,7 @@ final class AdminProductControllerTest extends DatabaseWebTestCase
         $this->em->flush();
 
         $this->client->loginUser($user);
-        $this->client->request(Request::METHOD_GET, '/admin/products/' . $product->getId() . '/edit');
+        $this->client->request(Request::METHOD_GET, '/admin/products/'.$product->getId().'/edit');
 
         $this->assertResponseIsSuccessful();
         $action = self::getContainer()->get('router')->generate('admin_products_update', ['id' => $product->getId()]);
@@ -136,5 +136,76 @@ final class AdminProductControllerTest extends DatabaseWebTestCase
         $this->assertResponseStatusCodeSame(422);
         self::assertJson($this->client->getResponse()->getContent());
         self::assertStringContainsString('title', $this->client->getResponse()->getContent());
+    }
+
+    public function testCreateProductWithImageUploads(): void
+    {
+        $user = $this->createAdminUser();
+        $category = new Category();
+        $category->setTitle('Shop Category');
+        $category->setSlug('shop-category');
+
+        $this->em->persist($category);
+        $this->em->flush();
+
+        $this->client->loginUser($user);
+
+        $tmpPreview = tempnam(sys_get_temp_dir(), 'upl').'.png';
+        file_put_contents($tmpPreview, base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=='));
+        $previewFile = new \Symfony\Component\HttpFoundation\File\UploadedFile($tmpPreview, 'preview.png', 'image/png', null, true);
+
+        $tmpDetail = tempnam(sys_get_temp_dir(), 'upl').'.png';
+        file_put_contents($tmpDetail, base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=='));
+        $detailFile = new \Symfony\Component\HttpFoundation\File\UploadedFile($tmpDetail, 'detail.png', 'image/png', null, true);
+
+        try {
+            $this->client->request(Request::METHOD_POST, '/admin/products/store', [
+                'title' => 'Product with Images',
+                'detail_text' => 'Product detail text',
+                'price' => 2000,
+                'balance' => 500,
+                'category_id' => $category->getId(),
+                'date' => '2025-06-01',
+                'features' => 'Product features',
+                'delivery' => 'Fast delivery',
+                'composition' => 'Product composition',
+                'size' => '500g',
+                'manufacturer' => 'Test Manufacturer',
+                'stars' => 95,
+            ], [
+                'preview_picture' => $previewFile,
+                'detail_picture' => $detailFile,
+            ]);
+
+            $this->assertResponseRedirects('/admin/products/');
+
+            $this->em->clear();
+            $product = $this->em->getRepository(Product::class)->findOneBy(['title' => 'Product with Images']);
+            self::assertNotNull($product);
+            self::assertNotNull($product->getPreviewPicture());
+            self::assertNotNull($product->getDetailPicture());
+
+            $projectDir = self::getContainer()->getParameter('kernel.project_dir');
+            $previewPicture = $this->em->getRepository(Product::class)->find($product->getId())->getPreviewPicture();
+            $detailPicture = $this->em->getRepository(Product::class)->find($product->getId())->getDetailPicture();
+            $previewPath = $projectDir.'/public/storage/shop_uploads/'.$previewPicture;
+            $detailPath = $projectDir.'/public/storage/shop_uploads/'.$detailPicture;
+            self::assertFileExists($previewPath);
+            self::assertFileExists($detailPath);
+
+            $this->client->request(Request::METHOD_POST, '/admin/products/'.$product->getId().'/delete');
+            $this->assertResponseRedirects('/admin/products/');
+
+            $this->em->clear();
+            $deleted = $this->em->getRepository(Product::class)->find($product->getId());
+            self::assertNull($deleted);
+        } finally {
+            if (file_exists($tmpPreview)) {
+                unlink($tmpPreview);
+            }
+            if (file_exists($tmpDetail)) {
+                unlink($tmpDetail);
+            }
+        }
     }
 }

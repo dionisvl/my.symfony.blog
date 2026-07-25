@@ -1,6 +1,0 @@
-certbot_email: info@phpqa.ru
-certbot_hosts:
-    - phpqa.ru
-    - www.phpqa.ru
-    - pets.phpqa.ru
-    - sveltewar.phpqa.ru

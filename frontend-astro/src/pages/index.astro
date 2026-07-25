@@ -1,0 +1,131 @@
+---
+export const prerender = false;
+
+import Layout from "../layouts/Layout.astro";
+import Sidebar from "../components/Sidebar.astro";
+import LazyImage from "../components/LazyImage.astro";
+import { getHome } from "../lib/api";
+import { formatDate } from "../lib/format";
+import { canonicalFor } from "../lib/url";
+
+const pageParam = Astro.url.searchParams.get("page");
+const page = Math.max(1, parseInt(pageParam || "1", 10));
+
+const data = await getHome(page);
+const title = `Web3 Blog - Homepage${page > 1 ? `, page ${page}` : ""}`;
+const description = `Stay updated with the latest trends in Web3 development, software engineering tips, and best coding practices for modern applications.${
+  page > 1 ? ` Page ${page}.` : ""
+}`;
+---
+
+<Layout title={title} description={description} canonical={canonicalFor(Astro.url.pathname)}>
+  <div class="w-full md:w-3/4 pr-0 md:pr-6 space-y-3">
+    {
+      data.posts.map((post) => (
+        <article class="bg-gray-800 rounded-lg shadow-sm overflow-hidden border border-gray-700">
+          <a
+            href={`/post/${post.slug}`}
+            class="flex flex-col transition-all duration-200 hover:bg-gray-700 hover:shadow-md"
+          >
+            <div class="flex flex-row">
+              <div class="flex-shrink-0 w-32 flex items-center justify-center p-1 px-3">
+                <div class="h-12 w-full flex items-center justify-center overflow-hidden">
+                  <LazyImage
+                    src={post.image_url}
+                    alt={post.title}
+                    class="h-12 w-auto object-contain transition-transform duration-300 group-hover:scale-110"
+                    width="75"
+                    height="50"
+                  />
+                </div>
+              </div>
+              <header class="flex-grow flex items-center p-1 px-3">
+                <h3 class="text-lg font-semibold text-gray-100 group-hover:text-blue-400 transition">
+                  {post.title}
+                </h3>
+              </header>
+            </div>
+            {post.description && (
+              <div class="px-4 pb-4">
+                <div class="prose max-w-none text-gray-300 text-sm line-clamp-2 hover:text-blue-300 transition-colors">
+                  <Fragment set:html={post.description} />
+                </div>
+              </div>
+            )}
+          </a>
+          <div class="flex justify-between items-center text-sm text-gray-400 pl-4 p-1 border-t border-gray-700">
+            <span>
+              By <a href="#" class="hover:text-blue-400">
+                {post.author?.name}
+              </a>
+              {" "}on {formatDate(post.created_at)}
+            </span>
+            <div class="flex flex-wrap items-center space-x-0 sm:space-x-4 sm:mr-4">
+              <span class="flex items-center w-full sm:w-auto">
+                <i class="fas fa-eye mr-1"></i>
+                {post.views_count}
+              </span>
+              <a
+                class="flex items-center w-full sm:w-auto group"
+                onclick="Likes.toggle(this,event);"
+                data-post_id={post.id}
+                href="#"
+                title="Like"
+              >
+                <i class="far fa-heart text-red-500 mr-1 heart-icon transition-transform duration-500"></i>
+                <span class="like_button_count transition-colors duration-500 group-hover:text-blue-400">
+                  {post.likes_count}
+                </span>
+              </a>
+            </div>
+          </div>
+        </article>
+      ))
+    }
+
+    {data.pagination.total_pages > 1 && (
+      <nav class="flex justify-center items-center space-x-2 my-6">
+        {data.pagination.has_prev && (
+          <a
+            href={data.pagination.prev_page === 1 ? "/" : `/?page=${data.pagination.prev_page}`}
+            class="px-3 py-2 rounded border border-gray-700 text-gray-300 hover:text-blue-400 hover:border-blue-400 transition"
+          >
+            Previous
+          </a>
+        )}
+
+        {Array.from({ length: data.pagination.total_pages }, (_, i) => {
+          const pageNum = i + 1;
+          const isActive = pageNum === data.pagination.current_page;
+          return (
+            <a
+              href={pageNum === 1 ? "/" : `/?page=${pageNum}`}
+              class={`px-3 py-2 rounded border transition ${
+                isActive
+                  ? "bg-blue-600 text-white border-blue-600"
+                  : "border-gray-700 text-gray-300 hover:text-blue-400 hover:border-blue-400"
+              }`}
+            >
+              {pageNum}
+            </a>
+          );
+        })}
+
+        {data.pagination.has_next && (
+          <a
+            href={`/?page=${data.pagination.next_page}`}
+            class="px-3 py-2 rounded border border-gray-700 text-gray-300 hover:text-blue-400 hover:border-blue-400 transition"
+          >
+            Next
+          </a>
+        )}
+      </nav>
+    )}
+  </div>
+
+  <Sidebar
+    categories={data.categories}
+    featuredPosts={data.featured_posts}
+    recentPosts={data.recent_posts}
+  />
+</Layout>

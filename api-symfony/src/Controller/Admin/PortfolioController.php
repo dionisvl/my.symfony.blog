@@ -40,8 +40,7 @@ final class PortfolioController extends AbstractController
     public function store(
         #[MapRequestPayload] AdminPortfolioPayload $payload,
         #[MapUploadedFile(name: 'image')] ?UploadedFile $image = null,
-    ): RedirectResponse
-    {
+    ): RedirectResponse {
         $payload->image = $image;
 
         $this->portfolioManager->create($payload);
@@ -72,14 +71,13 @@ final class PortfolioController extends AbstractController
 
     #[Route('/admin/portfolios/{id}/update', name: 'admin_portfolios_update', requirements: ['id' => '\d+'], methods: [
         'POST',
-        'PUT'
+        'PUT',
     ])]
     public function update(
         int $id,
         #[MapRequestPayload] AdminPortfolioPayload $payload,
         #[MapUploadedFile(name: 'image')] ?UploadedFile $image = null,
-    ): RedirectResponse
-    {
+    ): RedirectResponse {
         $portfolio = $this->portfolioRepository->find($id);
 
         if (!$portfolio instanceof Portfolio) {

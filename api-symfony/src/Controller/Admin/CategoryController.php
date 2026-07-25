@@ -65,7 +65,7 @@ final class CategoryController extends AbstractController
 
     #[Route('/admin/categories/{id}/update', name: 'admin_categories_update', requirements: ['id' => '\d+'], methods: [
         'POST',
-        'PUT'
+        'PUT',
     ])]
     public function update(int $id, #[MapRequestPayload] AdminCategoryPayload $payload): RedirectResponse
     {
