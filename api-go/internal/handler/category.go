@@ -53,7 +53,7 @@ func (h *CategoryHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	RespondJSON(w, http.StatusOK, categoryResponse{
-		Posts:      posts,
+		Posts:      EmptyIfNil(posts),
 		Category:   category,
 		Pagination: BuildPagination(page, perPage, total),
 	})

@@ -100,6 +100,18 @@ services:
       - "traefik.http.routers.symfony-admin-assets.tls.certresolver=myresolver"
       - "traefik.http.routers.symfony-admin-assets.service=symfony"
 
+      # Legacy pre-migration links pointed at /css/*.css for admin styles, which now
+      # live under /admin-assets. Astro owns /css on this host and would 404 them.
+      - "traefik.http.middlewares.legacy-admin-css.redirectregex.regex=^https?://[^/]+/css/(admin|some_admin_fix|bootstrap5-adminlte-compat)\\.css$$"
+      - "traefik.http.middlewares.legacy-admin-css.redirectregex.replacement=https://${MAIN_HOST}/admin-assets/css/$${1}.css"
+      - "traefik.http.middlewares.legacy-admin-css.redirectregex.permanent=true"
+      - "traefik.http.routers.symfony-legacy-admin-css.rule=(Host(`${MAIN_HOST}`) || Host(`www.${MAIN_HOST}`)) && (Path(`/css/admin.css`) || Path(`/css/some_admin_fix.css`) || Path(`/css/bootstrap5-adminlte-compat.css`))"
+      - "traefik.http.routers.symfony-legacy-admin-css.entrypoints=websecure"
+      - "traefik.http.routers.symfony-legacy-admin-css.priority=90"
+      - "traefik.http.routers.symfony-legacy-admin-css.tls.certresolver=myresolver"
+      - "traefik.http.routers.symfony-legacy-admin-css.middlewares=legacy-admin-css@docker"
+      - "traefik.http.routers.symfony-legacy-admin-css.service=symfony"
+
       - "traefik.http.services.symfony.loadbalancer.server.port=80"
 
   vmauth:

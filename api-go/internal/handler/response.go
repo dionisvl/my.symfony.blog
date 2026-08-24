@@ -66,3 +66,12 @@ func BuildPagination(page, perPage, total int) Pagination {
 		NextPage:    nextPage,
 	}
 }
+
+// EmptyIfNil keeps JSON collections marshalling as [] rather than null.
+func EmptyIfNil[T any](s []T) []T {
+	if s == nil {
+		return []T{}
+	}
+
+	return s
+}

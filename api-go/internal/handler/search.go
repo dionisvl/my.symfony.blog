@@ -38,7 +38,7 @@ func (h *SearchHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	RespondJSON(w, http.StatusOK, searchResponse{
-		Posts: posts,
+		Posts: EmptyIfNil(posts),
 		Query: query,
 	})
 }

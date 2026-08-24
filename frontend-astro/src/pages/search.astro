@@ -46,7 +46,7 @@ const description = "Search our blog for articles and posts on Web3, development
         <div class="bg-gray-800 border border-gray-700 text-gray-300 p-4 rounded">
           Enter a search query to find articles.
         </div>
-      ) : data && data.posts.length > 0 ? (
+      ) : data?.posts?.length ? (
         <>
           <div class="bg-green-900 border-l-4 border-green-500 text-green-300 p-4 mb-6 rounded">
             The search results for your query <b>{q}</b> are:

@@ -53,7 +53,7 @@ func (h *TagHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	RespondJSON(w, http.StatusOK, tagResponse{
-		Posts:      posts,
+		Posts:      EmptyIfNil(posts),
 		Tag:        tag,
 		Pagination: BuildPagination(page, perPage, total),
 	})
