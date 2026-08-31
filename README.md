@@ -161,3 +161,14 @@ docker compose -f compose.yml -f compose.override.prod.yaml up -d --build
 
 The Symfony image **must** be built from the `prod` stage — `--target prod` — since the
 `dev` stage deliberately ships without application code or vendored dependencies.
+
+## Engineering trade-offs
+
+- Public reads go through the Go API, while Symfony remains focused on the admin surface. This keeps the migration incremental instead of requiring a risky full rewrite.
+- Astro is isolated from PostgreSQL and receives only the API contract, so frontend rendering and persistence can evolve independently.
+- Integration tests use real PostgreSQL containers where persistence semantics matter; lightweight HTTP tests cover routing, middleware and response contracts.
+- Deprecated code remains behind explicit boundaries so modernization progress stays reviewable.
+
+## License
+
+MIT — see [LICENSE](LICENSE).
